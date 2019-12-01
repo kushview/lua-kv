@@ -1,0 +1,5 @@
+
+.lock-*
+/build/
+.waf-*
+/.vscode/
