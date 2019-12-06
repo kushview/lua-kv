@@ -11,10 +11,10 @@ static const luaL_Reg lrtmods[] = {
     { NULL, NULL }
 };
 
-void lrt_openlibs (lua_State* L) {
+void lrt_openlibs (lua_State* L, int glb) {
     const luaL_Reg* mod = NULL;
     for (mod = lrtmods; mod->func; mod++) {
-        luaL_requiref (L, mod->name, mod->func, 0);
+        luaL_requiref (L, mod->name, mod->func, glb);
         lua_pop (L, 1);  /* remove lib */
     }
 }

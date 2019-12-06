@@ -119,8 +119,11 @@ for (lrt_midi_buffer_iter_t (i) = lrt_midi_buffer_begin ((b)); \
 #define lrt_midi_buffer_iter_data(i)    (uint8_t*)i + (sizeof(int32_t) + sizeof(uint16_t))
 
 //=============================================================================
-/** Open all libraries */
-void lrt_openlibs (lua_State* L);
+/** Open all libraries
+    @param L    The Lua state
+    @param glb  Set 1 to set a global variable
+*/
+void lrt_openlibs (lua_State* L, int glb);
 
 #ifdef __cplusplus
 }

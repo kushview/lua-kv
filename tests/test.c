@@ -36,7 +36,7 @@ typedef struct _refdata_t {
 static lua_State* open() {
     lua_State* L = luaL_newstate();
     luaL_openlibs (L);
-    lrt_openlibs (L);
+    lrt_openlibs (L, 0);
     return L;
 }
 
