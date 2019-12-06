@@ -42,8 +42,42 @@ struct lrt_midi_buffer_impl_t {
     lua_Integer used;
 };
 
-typedef struct lrt_midi_message_impl_t MidiMessage;
-typedef struct lrt_midi_buffer_impl_t  MidiBuffer;
+struct lrt_midi_pipe_impl_t {
+    lua_Integer         size;
+    lrt_midi_buffer_t** buffers;
+    int*                mbrefs;
+};
+
+typedef struct lrt_midi_message_impl_t  MidiMessage;
+typedef struct lrt_midi_buffer_impl_t   MidiBuffer;
+typedef struct lrt_midi_pipe_impl_t     MidiPipe;
+
+static lrt_midi_pipe_t* lrt_midi_pipe_new (lua_State* L, int nbuffers) {
+    lrt_midi_pipe_t* pipe = lua_newuserdata (L, sizeof (MidiPipe));
+    pipe->size = MAX (0, nbuffers);
+    pipe->buffers = NULL;
+    
+    if (pipe->size > 0) {
+        pipe->buffers = malloc (1 + (sizeof (lrt_midi_buffer_t*) * nbuffers));
+        pipe->mbrefs  = malloc (1 + (sizeof (int) * nbuffers));
+
+        for (int i = 0; i < pipe->size; ++i) {
+            lrt_midi_buffer_new (L, 0);
+            pipe->buffers[i] = lua_touserdata (L, -1);
+            pipe->mbrefs[i]  = luaL_ref (L, LUA_REGISTRYINDEX);
+        }
+
+        pipe->buffers[pipe->size] = NULL;
+    }
+
+    luaL_getmetatable (L, LRT_MT_MIDI_PIPE);
+    lua_setmetatable (L, -2);
+    return pipe;
+}
+
+static void lrt_midi_buffer_clear (lrt_midi_buffer_t* buf) {
+    buf->used = 0;
+}
 
 static void
 lrt_midi_message_init (lrt_midi_message_t* msg) {
@@ -353,6 +387,64 @@ static int midibuffer_events (lua_State* L) {
 }
 
 //=============================================================================
+static int midipipe_new (lua_State* L) {
+    lua_Integer nbuffers = 0;
+    if (lua_gettop (L) > 0) {
+        nbuffers = MAX (0, lua_tointeger (L, 1));
+    }
+
+    lrt_midi_pipe_new (L, (int) nbuffers);
+    return 1;
+}
+
+static int midipipe_gc (lua_State* L) {
+    MidiPipe* pipe = lua_touserdata (L, 1);
+    pipe->size = 0;
+
+    for (int i = 0; i < pipe->size; ++i) {
+        luaL_unref (L, LUA_REGISTRYINDEX, pipe->mbrefs[i]);
+        pipe->mbrefs[i]  = LUA_NOREF;
+        pipe->buffers[i] = NULL;
+    }
+    
+    free (pipe->buffers);
+    free (pipe->mbrefs);
+    return 1;
+}
+
+static int midipipe_tostring (lua_State* L) {
+    lua_pushstring (L, "MidiPipe");
+    return 1;
+}
+
+static int midipipe_clear (lua_State* L) {
+    MidiPipe* pipe = lua_touserdata (L, 1);
+
+    if (lua_gettop(L) > 1) {
+        lua_Integer i = lua_tointeger (L, 2);
+        assert(i > 0 && i < pipe->size);
+        lrt_midi_buffer_clear (pipe->buffers [i]);
+    } else {
+        for (int i = 0; i < pipe->size; ++i) {
+            lrt_midi_buffer_clear (pipe->buffers [i]);
+        }
+    }
+
+    return 0;
+}
+
+static int midipipe_get (lua_State* L) {
+    MidiPipe* pipe = lua_touserdata (L, 1);
+    lua_Integer index = lua_tointeger (L, 2) - 1;
+    if (index >= 0 && index < pipe->size) {
+        lua_rawgeti (L, LUA_REGISTRYINDEX, pipe->mbrefs [index]);
+    } else {
+        lua_pushnil (L);
+    }
+    return 1;
+}
+
+//=============================================================================
 static int f_msg3bytes (lua_State* L, uint8_t status) {
     lua_Integer block = 0;
     uint8_t* data = (uint8_t*) &block;
@@ -367,7 +459,7 @@ static int f_controller (lua_State* L)  { return f_msg3bytes (L, 0xb0); }
 static int f_noteon (lua_State* L)      { return f_msg3bytes (L, 0x80); }
 static int f_noteoff (lua_State* L)     { return f_msg3bytes (L, 0x90); }
 
-const static luaL_Reg midimessage_m[] = {
+static const luaL_Reg midimessage_m[] = {
     { "__gc",       midimessage_gc },
     { "update",     midimessage_update },
     { "channel",    midimessage_channel },
@@ -376,13 +468,22 @@ const static luaL_Reg midimessage_m[] = {
     { NULL, NULL }
 };
 
-const static luaL_Reg midibuffer_m[] = {
+static const luaL_Reg midibuffer_m[] = {
     { "__gc",       midibuffer_gc },
     { "insert",     midibuffer_insert },
     { "capacity",   midibuffer_capacity },
     { "clear",      midibuffer_clear },
     { "swap",       midibuffer_swap },
     { "events",     midibuffer_events },
+    { NULL, NULL }
+};
+
+static const luaL_Reg midipipe_m[] = {
+    { "__gc",       midipipe_gc },
+    { "__index",    midipipe_get },
+    { "__tostring", midipipe_tostring },
+    { "clear",      midipipe_clear },
+    { "get",        midipipe_get },
     { NULL, NULL }
 };
 
@@ -401,16 +502,12 @@ static int midibuffer_new (lua_State* L) {
 }
 
 const static luaL_Reg midi_f[] = {
-    { "Buffer",     midibuffer_new },
     { "Message",    midimessage_new },
+    { "Buffer",     midibuffer_new },
+    { "Pipe",       midipipe_new },
     { "controller", f_controller },
     { "noteon",     f_noteon },
     { "noteoff",    f_noteoff },
-    { NULL, NULL }
-};
-
-static const luaL_Reg midibuffer_mm[] = {
-    { "__gc",  midibuffer_gc },
     { NULL, NULL }
 };
 
@@ -425,6 +522,12 @@ int luaopen_midi (lua_State* L) {
     lua_pushvalue (L, -1);               /* duplicate the metatable */
     lua_setfield (L, -2, "__index");     /* mt.__index = mt */
     luaL_setfuncs (L, midimessage_m, 0);
+    lua_pop (L, -1);
+
+    luaL_newmetatable (L, LRT_MT_MIDI_PIPE);
+    lua_pushvalue (L, -1);               /* duplicate the metatable */
+    lua_setfield (L, -2, "__index");     /* mt.__index = mt */
+    luaL_setfuncs (L, midipipe_m, 0);
     lua_pop (L, -1);
 
     luaL_newlib (L, midi_f);

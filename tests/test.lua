@@ -78,6 +78,44 @@ local function test_midibuffer_swap_table()
    expect (buf1:capacity() == 100)
 end
 
+local function addnotes (b)
+   local frame = 0
+   for _ = 1, 1 do
+      for note = 0, 127, 1 do
+         b:insert (frame, midi.noteon (1, note, math.random (0, 127)))
+         frame = frame + 10
+         b:insert (frame, midi.noteoff (1, note, 0))
+         frame = frame + 10
+         b:insert (frame, midi.noteon (5, note, math.random (0, 127)))
+         frame = frame + 10
+         b:insert (frame, midi.noteoff (5, note, 0))
+         frame = frame + 10
+      end
+   end
+end
+
+local function testnotes (b)
+   local frame = 0
+   local tick = 0
+   local m = midi.Message()
+
+   for f in b:events(m) do
+      if tick % 4 == 0 or tick % 4 == 1 then
+         expect (m:channel() == 1)
+      else
+         expect (m:channel() == 5)
+      end
+
+      expect (frame == f)
+      expect (m:channel(12) == 12)
+      expect (m:channel() == 12)
+      frame = frame + 10
+      tick = tick + 1
+   end
+
+   expect (tick > 0 and frame > 0)
+end
+
 local function test_midibuffer_foreach()
    begin_test ("iterate")
    local b = midi.Buffer (1024 * 10)
@@ -142,6 +180,25 @@ local function test_midibuffer_foreach()
    for _, buf in pairs({ a, b, c}) do buf:clear() end
 end
 
+local function test_midipipe()
+   local pipe = midi.Pipe (2)
+   print (pipe)
+   print (pipe.clear)
+   print (pipe.get)
+   begin_test("__index")
+   expect (pipe[0] == nil)
+   begin_test("add notes")
+   addnotes (pipe[1])
+   begin_test("check notes")
+   testnotes (pipe[1])
+   begin_test ("external swap")
+   pipe[1]:swap (pipe[2])
+   testnotes (pipe[2])
+   begin_test ("clear")
+   print (pipe.clear)
+   print (pipe.get)
+end
+
 local tests = {
    {
       name = "audio dB conversions",
@@ -162,6 +219,10 @@ local tests = {
    {
       name = "midi.Buffer (foreach)",
       test = test_midibuffer_foreach
+   },
+   {
+      name = "midi.Pipe",
+      test = test_midipipe
    }
 }
 

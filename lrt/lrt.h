@@ -31,6 +31,7 @@ extern "C" {
 #define LRT_MT_AUDIO_BUFFER                 "*lrt_audio_buffer_t"
 #define LRT_MT_MIDI_MESSAGE                 "*lrt_midi_message_t"
 #define LRT_MT_MIDI_BUFFER                  "*lrt_midi_buffer_t"
+#define LRT_MT_MIDI_PIPE                    "*lrt_midi_pipe_t"
 
 #if LRT_FORCE_FLOAT32
 typedef float                               lrt_sample_t;
@@ -42,6 +43,7 @@ typedef struct lrt_audio_buffer_impl_t      lrt_audio_buffer_t;
 typedef struct lrt_midi_message_impl_t      lrt_midi_message_t;
 typedef struct lrt_midi_buffer_impl_t       lrt_midi_buffer_t;
 typedef void*                               lrt_midi_buffer_iter_t;
+typedef struct lrt_midi_pipe_impl_t         lrt_midi_pipe_t;
 
 /** Adds a new audio buffer to the lua stack
     @param L            The lua state
@@ -142,7 +144,7 @@ for (lrt_midi_buffer_iter_t (i) = lrt_midi_buffer_begin ((b)); \
 //=============================================================================
 /** Open all libraries
     @param L    The Lua state
-    @param glb  Set 1 to set a global variable
+    @param glb  Set 1 to assign a global variable for each library
 */
 void lrt_openlibs (lua_State* L, int glb);
 
