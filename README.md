@@ -1,5 +1,5 @@
-# LRT
-A set of Lua libraries for use in a real time environment
+# Lua RT
+A set of Lua libraries for use in a real time environment.
 
 #### Building
 ```
@@ -15,6 +15,7 @@ _may need `sudo` here_
 The above will install to `$PREFIX/lib/lua/5.3`
 
 #### Usage
+__Converting Decibels to Gain and Back__
 ```lua
 local audio = require ('audio')
 
@@ -22,24 +23,21 @@ local audio = require ('audio')
 local minus_infinity = -90.0
 
 -- convert dB to gain
-local gain = audio.dbtogain (6.0, minus_infinity)
+local gain = audio.db2gain (6.0, minus_infinity)
 
 -- convert gain to dB
-local vol  = audio.gaintodb (gain, minus_infinity)
+local vol  = audio.gain2db (gain, minus_infinity)
 ```
 
 #### Project Inclusion
-1) Compile `src/*.c` with your code
-2) Require the module by normal means.
+1) Compile the `src/*.c` files with your code.
+2) Open the libraris
 
 ```c
-#include <lauxlib.h>
-
-extern int luaopen_audio (lua_State*);
+#include "lrt/lrt.h"
 
 void register_lua_modules (lua_State* L) {
-    lua_requiref (L, "audio", luaopen_audio, 0);
-    lua_pop (L, 1);
+    lrt_openlibs (L, 1);
 }
 ```
 
