@@ -24,8 +24,9 @@ extern "C" {
 #include <stdint.h>
 #include <lua.h>
 
-#define LRT_MT_MIDI_MESSAGE     "*lrt_midi_message_t"
-#define LRT_MT_MIDI_BUFFER      "*lrt_midi_buffer_t"
+#define LRT_MT_AUDIO_BUFFER                 "*lrt_audio_buffer_t"
+#define LRT_MT_MIDI_MESSAGE                 "*lrt_midi_message_t"
+#define LRT_MT_MIDI_BUFFER                  "*lrt_midi_buffer_t"
 
 // typedef lua_Number                          lrt_sample_t;
 typedef float                               lrt_sample_t;
@@ -48,10 +49,10 @@ int lrt_audio_bufer_new (lua_State* L, int nchannels, int nframes);
 lrt_audio_buffer_t* lrt_audio_buffer_handle (lua_State* L, int index);
 
 /** Refer the given buffer to a set of external audio channels */
-void lrt_audio_buffer_refer_to (lrt_audio_buffer_t* buffer,
+void lrt_audio_buffer_refer_to (lrt_audio_buffer_t*  buffer,
                                 lrt_sample_t* const* data,
-                                int num_channels,
-                                int num_frames);
+                                int                  num_channels,
+                                int                  num_frames);
 
 /** Returs this buffer's channel cound */
 int lrt_audio_buffer_channels (lrt_audio_buffer_t*);
@@ -62,23 +63,47 @@ int lrt_audio_buffer_length (lrt_audio_buffer_t*);
 /** Returns an array of channels. DO NOT keep a reference to this */
 lrt_sample_t** lrt_audio_buffer_array (lrt_audio_buffer_t*);
 
-lrt_midi_buffer_t* lrt_midi_buffer_new (size_t size);
+//=============================================================================
+/** Adds a new midi buffer to the stack */
+lrt_midi_buffer_t* lrt_midi_buffer_new (lua_State* L, size_t size);
 
-void lrt_midi_buffer_free (lrt_midi_buffer_t*);
-void lrt_midi_buffer_free_data (lrt_midi_buffer_t*);
+/** Inserts some MIDI data in the buffer */
 void lrt_midi_buffer_insert (lrt_midi_buffer_t* buf, uint8_t* bytes, size_t len, int frame);
+
+/** Returns the start iterator
+    Do not modify the retured iterator in any way
+*/
 lrt_midi_buffer_iter_t lrt_midi_buffer_begin (lrt_midi_buffer_t*);
+
+/** Returns the end iterator
+    Do not modify the retured iterator in any way
+*/
 lrt_midi_buffer_iter_t lrt_midi_buffer_end (lrt_midi_buffer_t*);
+
+/** Returns the next event iterator
+    Do not modify the retured iterator in any way
+*/
 lrt_midi_buffer_iter_t lrt_midi_buffer_next (lrt_midi_buffer_t*, lrt_midi_buffer_iter_t);
 
+/** Loop through all midi events */
 #define lrt_midi_buffer_foreach(b, i) \
 for (lrt_midi_buffer_iter_t (i) = lrt_midi_buffer_begin ((b)); \
     i < lrt_midi_buffer_end ((b)); \
     i = lrt_midi_buffer_next ((b), (i)))
+
+/** Returns the frame index of this event */
 #define lrt_midi_buffer_iter_frame(i)   *(int32_t*)i
+
+/** Returns the data size of this event */
 #define lrt_midi_buffer_iter_size(i)    (int)(*(uint16_t*)(i + sizeof(int32_t)))
+
+/** Returns the raw MIDI data of this event
+    Do not modify in any way
+*/
 #define lrt_midi_buffer_iter_data(i)    (uint8_t*)i + (sizeof(int32_t) + sizeof(uint16_t))
 
+//=============================================================================
+/** Open all libraries */
 void lrt_openlibs (lua_State* L);
 
 #ifdef __cplusplus

@@ -77,24 +77,28 @@ lrt_midi_buffer_init (lrt_midi_buffer_t* buf, size_t size) {
 }
 
 lrt_midi_buffer_t* 
-lrt_midi_buffer_new (size_t size) {
-    MidiBuffer* buf = malloc (sizeof (MidiBuffer));
-    return lrt_midi_buffer_init (buf, size);
+lrt_midi_buffer_new (lua_State* L, size_t size) {
+    size = MAX(0, size);
+    MidiBuffer* buf = lua_newuserdata (L, sizeof (MidiBuffer));
+    lrt_midi_buffer_init (buf, size);
+    luaL_getmetatable (L, LRT_MT_MIDI_BUFFER);
+    lua_setmetatable (L, -2);
+    return buf;
 }
 
-void 
-lrt_midi_buffer_free (lrt_midi_buffer_t* buf) {
-    lrt_midi_buffer_free_data (buf);
-    free (buf);
-}
-
-void
+static void
 lrt_midi_buffer_free_data (lrt_midi_buffer_t* buf) {
     if (buf->data != NULL) {
         free (buf->data);
         buf->data = NULL;
     }
     buf->size = buf->used = 0;
+}
+
+static void 
+lrt_midi_buffer_free (lrt_midi_buffer_t* buf) {
+    lrt_midi_buffer_free_data (buf);
+    free (buf);
 }
 
 void 
@@ -353,10 +357,7 @@ static int midimessage_new (lua_State* L) {
 
 static int midibuffer_new (lua_State* L) {
     size_t size = (size_t)(lua_gettop(L) > 0 ? MAX(0, lua_tointeger (L, 1)) : 0);
-    MidiBuffer* buf = lua_newuserdata (L, sizeof (MidiBuffer));
-    lrt_midi_buffer_init (buf, size);
-    luaL_getmetatable (L, LRT_MT_MIDI_BUFFER);
-    lua_setmetatable (L, -2);
+    lrt_midi_buffer_new (L, size);
     return 1;
 }
 

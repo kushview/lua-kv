@@ -108,8 +108,8 @@ static void test_referto (lua_State* L, lrt_audio_buffer_t* buf) {
     refdata_free (rd);
 }
 
-static void test_foreach() {
-    MidiBuffer* buf = lrt_midi_buffer_new (0);
+static void test_foreach (lua_State* L) {
+    MidiBuffer* buf = lrt_midi_buffer_new (L, 0);
     
     uint8_t data [3];
     data[0] = 0x90;
@@ -135,6 +135,11 @@ static void test_foreach() {
         printf ("data1=0x%02x data2=0x%02x data3=0x%02x\n", data[0], data[1], data[2]);
         printf ("\n");
     }
+
+    lua_pop (L, -1);
+    buf = NULL;
+    assert (lua_gettop (L) == 0);
+    lua_gc (L, LUA_GCCOLLECT, 0);
 }
 
 static void test_api (lua_State* L) {
@@ -155,6 +160,8 @@ static void test_audio (lua_State* L) {
     test_referto (L, buf);
     lua_pop (L, -1);
     buf = NULL;
+    assert (0 == lua_gettop (L));
+    lua_gc (L, LUA_GCCOLLECT, 0);
 }
 
 int main() {
@@ -163,7 +170,7 @@ int main() {
     assert (0 == lua_gettop (L));
     
     test_audio (L);
-    test_foreach();
+    test_foreach (L);
     test_api (L);
     
     close (L);
