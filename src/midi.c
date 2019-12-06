@@ -24,9 +24,6 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "util.h"
 #include "lrt/lrt.h"
 
-#define MT_MIDI_MESSAGE     "lrt.MidiMessage.Handle"
-#define MT_MIDI_BUFFER      "lrt.MidiBuffer.Handle"
-
 typedef union _midi_data_t {
     uint8_t* data;
     uint8_t bytes [sizeof (uint8_t*)];
@@ -155,7 +152,7 @@ lrt_midi_buffer_next (lrt_midi_buffer_t*     buf,
 
 //=============================================================================
 static int midimessage_update (lua_State* L) {
-    MidiMessage* msg = lua_touserdata (L, lua_upvalueindex (1));
+    MidiMessage* msg = lua_touserdata (L, 1);
     
     if (lua_gettop (L) >= 3) {
         uint8_t* data    = lua_touserdata (L, 2);
@@ -170,7 +167,7 @@ static int midimessage_update (lua_State* L) {
 }
 
 static int midimessage_channel (lua_State* L) {
-    MidiMessage* msg = lua_touserdata (L, lua_upvalueindex (1));
+    MidiMessage* msg = lua_touserdata (L, 1);
     uint8_t* data = lrt_midi_message_data (msg);
     
     if ((data[0] & 0xf0) == (uint8_t) 0xf0) {
@@ -189,14 +186,14 @@ static int midimessage_channel (lua_State* L) {
 }
 
 static int midimessage_isnoteon (lua_State* L) {
-    MidiMessage* msg = lua_touserdata (L, lua_upvalueindex (1));
+    MidiMessage* msg = lua_touserdata (L, 1);
     uint8_t* data = msg->data.data;
     lua_pushboolean (L, (data[0] & 0xf0) == 0x90 && data[2] != 0);
     return 1;
 }
 
 static int midimessage_isnoteoff (lua_State* L) {
-    MidiMessage* msg = lua_touserdata (L, lua_upvalueindex (1));
+    MidiMessage* msg = lua_touserdata (L, 1);
     uint8_t* data = msg->data.data;
     lua_pushboolean (L, (data[0] & 0xf0) == 0x80);
     return 1;
@@ -210,7 +207,7 @@ static int midibuffer_gc (lua_State* L) {
 }
 
 static int midibuffer_insert (lua_State* L) {
-    MidiBuffer* buf = lua_touserdata (L, lua_upvalueindex (1));
+    MidiBuffer* buf = lua_touserdata (L, 1);
     if (lua_gettop (L) == 3) {
         lua_Integer data = lua_tointeger (L, 3);
         lrt_midi_buffer_insert (buf, (uint8_t*)&data, 3, lua_tointeger (L, 2));
@@ -235,13 +232,13 @@ static int midibuffer_insert (lua_State* L) {
 }
 
 static int midibuffer_clear (lua_State* L) {
-    MidiBuffer* buf = lua_touserdata (L, lua_upvalueindex (1));
+    MidiBuffer* buf = lua_touserdata (L, 1);
     buf->used = 0;
     return 0;
 }
 
 static int midibuffer_handle (lua_State* L) {
-    lua_pushlightuserdata (L, lua_touserdata (L, lua_upvalueindex (1)));
+    lua_pushlightuserdata (L, lua_touserdata (L, 1));
     return 1;
 }
 
@@ -261,22 +258,15 @@ static void lrt_midi_buffer_swap (lrt_midi_buffer_t* a, lrt_midi_buffer_t* b) {
 
 //=============================================================================
 static int midibuffer_capacity (lua_State* L) {
-    MidiBuffer* buf = lua_touserdata (L, lua_upvalueindex (1));
+    MidiBuffer* buf = lua_touserdata (L, 1);
     lua_pushinteger (L, (lua_Integer) buf->size);
     return 1;
 }
 
 static int midibuffer_swap (lua_State* L) {
-    MidiBuffer* buf = lua_touserdata (L, lua_upvalueindex (1));
+    MidiBuffer* buf = lua_touserdata (L, 1);
     
     switch (lua_type (L, 2)) {
-        case LUA_TTABLE: {
-            lua_getfield (L, 2, "handle");
-            lua_call (L, 0, 1);
-            lrt_midi_buffer_swap (buf, lua_touserdata (L, -1));
-            break;
-        }
-
         case LUA_TUSERDATA:
         case LUA_TLIGHTUSERDATA: {
             lrt_midi_buffer_swap (buf, lua_touserdata (L, 2));
@@ -313,7 +303,7 @@ static int midibuffer_iter_f (lua_State* L) {
 }
 
 static int midibuffer_iter (lua_State* L) {
-    MidiBuffer* buf = lua_touserdata (L, lua_upvalueindex (1));
+    MidiBuffer* buf = lua_touserdata (L, 1);
     lua_pushlightuserdata (L, buf);
     lua_pushlightuserdata (L, lrt_midi_buffer_begin (buf));
     lua_pushcclosure (L, &midibuffer_iter_f, 2);
@@ -344,42 +334,29 @@ const static luaL_Reg midimessage_m[] = {
 };
 
 const static luaL_Reg midibuffer_m[] = {
+    { "__gc",       midibuffer_gc },
     { "insert",     midibuffer_insert },
     { "capacity",   midibuffer_capacity },
     { "clear",      midibuffer_clear },
-    { "handle",     midibuffer_handle },
     { "swap",       midibuffer_swap },
     { "iter",       midibuffer_iter },
     { NULL, NULL }
 };
 
 static int midimessage_new (lua_State* L) {
-    lua_newtable (L);
-    luaL_getmetatable (L, "lrt.MidiMessage");
-    lua_setmetatable (L, -2);
-
     MidiMessage* msg = lua_newuserdata (L, sizeof (MidiMessage));
     lrt_midi_message_init (msg);
-    luaL_getmetatable (L, MT_MIDI_MESSAGE);
+    luaL_getmetatable (L, LRT_MT_MIDI_MESSAGE);
     lua_setmetatable (L, -2);
-
-    luaL_setfuncs (L, midimessage_m, 1);
     return 1;
 }
 
 static int midibuffer_new (lua_State* L) {
     size_t size = (size_t)(lua_gettop(L) > 0 ? MAX(0, lua_tointeger (L, 1)) : 0);
-    
-    lua_newtable (L);
-    luaL_getmetatable (L, "lrt.MidiBuffer");
-    lua_setmetatable (L, -2);
-
     MidiBuffer* buf = lua_newuserdata (L, sizeof (MidiBuffer));
     lrt_midi_buffer_init (buf, size);
-    luaL_getmetatable (L, MT_MIDI_BUFFER);
+    luaL_getmetatable (L, LRT_MT_MIDI_BUFFER);
     lua_setmetatable (L, -2);
-
-    luaL_setfuncs (L, midibuffer_m, 1);
     return 1;
 }
 
@@ -411,12 +388,18 @@ static const luaL_Reg midimessage_mm[] = {
 };
 
 int luaopen_midi (lua_State* L) {
-    luaL_newmetatable (L, MT_MIDI_BUFFER);
-    luaL_setfuncs (L, midibuffer_mm, 0);
+    luaL_newmetatable (L, LRT_MT_MIDI_BUFFER);
+    // luaL_setfuncs (L, midibuffer_mm, 0);
+    lua_pushvalue (L, -1);               /* duplicate the metatable */
+    lua_setfield (L, -2, "__index");     /* mt.__index = mt */
+    luaL_setfuncs (L, midibuffer_m, 0);
     lua_pop (L, -1);
 
-    luaL_newmetatable (L, MT_MIDI_MESSAGE);
-    luaL_setfuncs (L, midimessage_mm, 0);
+    luaL_newmetatable (L, LRT_MT_MIDI_MESSAGE);
+    // luaL_setfuncs (L, midimessage_mm, 0);
+    lua_pushvalue (L, -1);               /* duplicate the metatable */
+    lua_setfield (L, -2, "__index");     /* mt.__index = mt */
+    luaL_setfuncs (L, midimessage_m, 0);
     lua_pop (L, -1);
 
     luaL_newlib (L, midi_f);

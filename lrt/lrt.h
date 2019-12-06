@@ -14,8 +14,8 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 */
 
-#ifndef LRT_AUDIO_H
-#define LRT_AUDIO_H
+#ifndef LRT_H
+#define LRT_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,6 +23,9 @@ extern "C" {
 
 #include <stdint.h>
 #include <lua.h>
+
+#define LRT_MT_MIDI_MESSAGE     "*lrt_midi_message_t"
+#define LRT_MT_MIDI_BUFFER      "*lrt_midi_buffer_t"
 
 // typedef lua_Number                          lrt_sample_t;
 typedef float                               lrt_sample_t;

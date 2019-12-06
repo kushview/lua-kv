@@ -76,21 +76,12 @@ local function test_audiobuffer_allocated()
 end
 
 local function test_midibuffer_swap_table()
-   begin_test ("swap/table")
+   begin_test ("swap")
    local buf1 = midi.Buffer (0)
    local buf2 = midi.Buffer (100)
    buf1:swap (buf2)
    expect (buf2:capacity() == 0)
    expect (buf1:capacity() == 100)
-end
-
-local function test_midibuffer_swap_handle()
-   begin_test ("swap/handle")
-   local buf1 = midi.Buffer (0)
-   local buf2 = midi.Buffer (100)
-   buf1:swap (buf2:handle())
-   expect (buf2:capacity() == 0, buf2:capacity())
-   expect (buf1:capacity() == 100, buf1:capacity())
 end
 
 local function test_midibuffer_foreach()
@@ -153,12 +144,8 @@ local tests = {
       test = test_audiobuffer_allocated
    },
    {
-      name = "midi.Buffer (swap table)",
+      name = "midi.Buffer (swap)",
       test = test_midibuffer_swap_table
-   },
-   {
-      name = "midi.Buffer (swap handle)",
-      test = test_midibuffer_swap_handle
    },
    {
       name = "midi.Buffer (foreach)",
