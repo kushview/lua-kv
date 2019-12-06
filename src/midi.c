@@ -101,6 +101,20 @@ lrt_midi_buffer_free (lrt_midi_buffer_t* buf) {
     free (buf);
 }
 
+static void lrt_midi_buffer_swap (lrt_midi_buffer_t* a, lrt_midi_buffer_t* b) {
+    a->size = a->size + b->size;
+    b->size = a->size - b->size;
+    a->size = a->size - b->size;
+
+    a->used = a->used + b->used;
+    b->used = a->used - b->used;
+    a->used = a->used - b->used;
+
+    a->data = (uint8_t*)((uintptr_t)a->data + (uintptr_t)b->data);
+    b->data = (uint8_t*)((uintptr_t)a->data - (uintptr_t)b->data);
+    a->data = (uint8_t*)((uintptr_t)a->data - (uintptr_t)b->data);
+}
+
 void 
 lrt_midi_buffer_insert (lrt_midi_buffer_t* buf, 
                         uint8_t*           bytes, 
@@ -155,6 +169,14 @@ lrt_midi_buffer_next (lrt_midi_buffer_t*     buf,
 }
 
 //=============================================================================
+static int midimessage_gc (lua_State* L) {
+    MidiMessage* msg = lua_touserdata (L, 1);
+    if (msg->allocated) {
+        free (msg->data.data);
+    }
+    return 0;
+}
+
 static int midimessage_update (lua_State* L) {
     MidiMessage* msg = lua_touserdata (L, 1);
     
@@ -241,25 +263,6 @@ static int midibuffer_clear (lua_State* L) {
     return 0;
 }
 
-static int midibuffer_handle (lua_State* L) {
-    lua_pushlightuserdata (L, lua_touserdata (L, 1));
-    return 1;
-}
-
-static void lrt_midi_buffer_swap (lrt_midi_buffer_t* a, lrt_midi_buffer_t* b) {
-    a->size = a->size + b->size;
-    b->size = a->size - b->size;
-    a->size = a->size - b->size;
-
-    a->used = a->used + b->used;
-    b->used = a->used - b->used;
-    a->used = a->used - b->used;
-
-    a->data = (uint8_t*)((uintptr_t)a->data + (uintptr_t)b->data);
-    b->data = (uint8_t*)((uintptr_t)a->data - (uintptr_t)b->data);
-    a->data = (uint8_t*)((uintptr_t)a->data - (uintptr_t)b->data);
-}
-
 //=============================================================================
 static int midibuffer_capacity (lua_State* L) {
     MidiBuffer* buf = lua_touserdata (L, 1);
@@ -330,6 +333,7 @@ static int f_noteon (lua_State* L)      { return f_msg3bytes (L, 0x80); }
 static int f_noteoff (lua_State* L)     { return f_msg3bytes (L, 0x90); }
 
 const static luaL_Reg midimessage_m[] = {
+    { "__gc",       midimessage_gc },
     { "update",     midimessage_update },
     { "channel",    midimessage_channel },
     { "isnoteon",   midimessage_isnoteon },
@@ -375,29 +379,16 @@ static const luaL_Reg midibuffer_mm[] = {
     { NULL, NULL }
 };
 
-static int midimessage_gc (lua_State* L) {
-    MidiMessage* msg = lua_touserdata (L, 1);
-    if (msg->allocated) {
-        free (msg->data.data);
-    }
-    return 0;
-}
 
-static const luaL_Reg midimessage_mm[] = {
-    { "__gc",  midimessage_gc },
-    { NULL, NULL }
-};
 
 int luaopen_midi (lua_State* L) {
     luaL_newmetatable (L, LRT_MT_MIDI_BUFFER);
-    // luaL_setfuncs (L, midibuffer_mm, 0);
     lua_pushvalue (L, -1);               /* duplicate the metatable */
     lua_setfield (L, -2, "__index");     /* mt.__index = mt */
     luaL_setfuncs (L, midibuffer_m, 0);
     lua_pop (L, -1);
 
     luaL_newmetatable (L, LRT_MT_MIDI_MESSAGE);
-    // luaL_setfuncs (L, midimessage_mm, 0);
     lua_pushvalue (L, -1);               /* duplicate the metatable */
     lua_setfield (L, -2, "__index");     /* mt.__index = mt */
     luaL_setfuncs (L, midimessage_m, 0);

@@ -1,2 +1,2 @@
 #!/bin/bash
-LUA_CPATH="build/modules/?.so" lua test.lua
+LUA_CPATH="build/modules/?.so" lua "tests/test.lua"

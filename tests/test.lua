@@ -32,10 +32,8 @@ end
 local function test_audiobuffer()
    begin_test ("defaults")
    local buf = audio.Buffer()
-   expect (tostring (buf) == 'lrt.audio.Buffer')
-   expect (type (buf) == 'table')
-   expect (type (buf:handle()) == 'userdata')
-   expect (buf:handle() ~= nil)
+   print (string.format ("  %s", tostring (buf)))
+   expect (type (buf) == 'userdata')
    expect (type (buf:raw (0)) == 'userdata')
    expect (type (buf:array()) == 'userdata')
    expect (buf:channels() == 0)
@@ -53,6 +51,7 @@ local function test_audiobuffer_allocated()
    local nchans = 1
    local nframes = samplerate * 10
    local buf = audio.Buffer (nchans, nframes)
+   print (string.format ("  %s", tostring (buf)))
    expect (buf:channels() == nchans)
    expect (buf:length() == nframes)
    local value = audio.round (math.random());
@@ -60,11 +59,6 @@ local function test_audiobuffer_allocated()
    for c = 1, nchans do
       for f = 1, nframes do
          buf:set (c, f, value)
-      end
-   end
-
-   for c = 1, nchans do
-      for f = 1, nframes do
          expect (value == buf:get (c, f))
       end
    end

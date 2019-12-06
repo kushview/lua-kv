@@ -30,7 +30,7 @@ static const int nframes   = 512;
 typedef struct _refdata_t {
     int channels;
     int frames;
-    float** data;
+    lrt_sample_t** data;
 } refdata_t;
 
 static lua_State* open() {
@@ -50,14 +50,14 @@ static refdata_t* refdata_new (int nc, int nf) {
 
     rd->channels = nc;
     rd->frames = nf;
-    size_t sz = sizeof(float*) * nc + sizeof(float) * nc * nf;
+    size_t sz = sizeof(lrt_sample_t*) * nc + sizeof(lrt_sample_t) * nc * nf;
     rd->data = malloc (sz);
-    float* ptr = (float*)(rd->data + nc);
+    lrt_sample_t* ptr = (lrt_sample_t*)(rd->data + nc);
     int i;
     for (i = 0; i < nc; ++i)
         rd->data[i] = (ptr + i * nf);
     for (i = 0; i < nc; ++i)
-        memset (rd->data[i], 0, sizeof(float) * (size_t)nf);
+        memset (rd->data[i], 0, sizeof(lrt_sample_t) * (size_t)nf);
     return rd;
 }
 
@@ -103,7 +103,7 @@ static void test_referto (lua_State* L, lrt_audio_buffer_t* buf) {
 
     // reset internal buffer data;
     AudioBuffer* ab = (AudioBuffer*) buf;
-    ab->channels = (float**) ab->data;
+    ab->channels = (lrt_sample_t**) ab->data;
 
     refdata_free (rd);
 }
@@ -152,10 +152,8 @@ static void test_api (lua_State* L) {
 }
 
 static void test_audio (lua_State* L) {
-    lrt_audio_bufer_new (L, nchannels, nframes);
+    lrt_audio_buffer_t* buf = lrt_audio_buffer_new (L, nchannels, nframes);
     assert (1 == lua_gettop (L));
-
-    lrt_audio_buffer_t* buf = lrt_audio_buffer_handle (L, -1);
     test_basics (L, buf);
     test_referto (L, buf);
     lua_pop (L, -1);

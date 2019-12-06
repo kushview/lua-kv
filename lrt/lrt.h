@@ -24,12 +24,20 @@ extern "C" {
 #include <stdint.h>
 #include <lua.h>
 
+#ifndef LRT_FORCE_FLOAT32
+ #define LRT_FORCE_FLOAT32                  0
+#endif
+
 #define LRT_MT_AUDIO_BUFFER                 "*lrt_audio_buffer_t"
 #define LRT_MT_MIDI_MESSAGE                 "*lrt_midi_message_t"
 #define LRT_MT_MIDI_BUFFER                  "*lrt_midi_buffer_t"
 
-// typedef lua_Number                          lrt_sample_t;
+#if LRT_FORCE_FLOAT32
 typedef float                               lrt_sample_t;
+#else
+typedef lua_Number                          lrt_sample_t;
+#endif
+
 typedef struct lrt_audio_buffer_impl_t      lrt_audio_buffer_t;
 typedef struct lrt_midi_message_impl_t      lrt_midi_message_t;
 typedef struct lrt_midi_buffer_impl_t       lrt_midi_buffer_t;
@@ -40,7 +48,9 @@ typedef void*                               lrt_midi_buffer_iter_t;
     @param nchannels    Total audio channels
     @param nframes      Number of samples in each channel
 */
-int lrt_audio_bufer_new (lua_State* L, int nchannels, int nframes);
+lrt_audio_buffer_t* lrt_audio_bufer_new (lua_State* L, 
+                                         int        nchannels, 
+                                         int        nframes);
 
 /** Returns the underlying C-object 
     @param L        The lua state
