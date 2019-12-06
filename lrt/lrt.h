@@ -48,19 +48,25 @@ int lrt_audio_bufer_new (lua_State* L, int nchannels, int nframes);
 */
 lrt_audio_buffer_t* lrt_audio_buffer_handle (lua_State* L, int index);
 
-/** Refer the given buffer to a set of external audio channels */
+/** Refer the given buffer to a set of external audio channels
+ 
+    @param buffer       The audio buffer
+    @param data         External data to refer to
+    @param nchannels    Number of channels is external data
+    @param nframes      Number of samples in each external data channel
+*/
 void lrt_audio_buffer_refer_to (lrt_audio_buffer_t*  buffer,
                                 lrt_sample_t* const* data,
-                                int                  num_channels,
-                                int                  num_frames);
+                                int                  nchannels,
+                                int                  nframes);
 
-/** Returs this buffer's channel cound */
+/** Returs this buffer's channel count */
 int lrt_audio_buffer_channels (lrt_audio_buffer_t*);
 
 /** Returns this buffer's length in samples */
 int lrt_audio_buffer_length (lrt_audio_buffer_t*);
 
-/** Returns an array of channels. DO NOT keep a reference to this */
+/** Returns an array of channels. DO NOT keep a reference to this. */
 lrt_sample_t** lrt_audio_buffer_array (lrt_audio_buffer_t*);
 
 //=============================================================================
