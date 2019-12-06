@@ -1,5 +1,5 @@
-# decibels
-A Lua module for converting dB to gain and back.
+# LRT
+A set of Lua libraries for use in a real time environment
 
 #### Building
 ```
