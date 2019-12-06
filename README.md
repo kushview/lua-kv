@@ -16,29 +16,29 @@ The above will install to `$PREFIX/lib/lua/5.3`
 
 #### Usage
 ```lua
-local db = require ('decibels')
+local audio = require ('audio')
 
 -- specifiy minus infinity dB (default is -100.0)
 local minus_infinity = -90.0
 
 -- convert dB to gain
-local gain = db.togain (6.0, minus_infinity)
+local gain = audio.dbtogain (6.0, minus_infinity)
 
 -- convert gain to dB
-local vol  = db.fromgain (gain, minus_infinity)
+local vol  = audio.gaintodb (gain, minus_infinity)
 ```
 
 #### Project Inclusion
-1) Compile `decibels.c` with your code
+1) Compile `src/*.c` with your code
 2) Require the module by normal means.
 
 ```c
 #include <lauxlib.h>
 
-extern int luaopen_decibels (lua_State*);
+extern int luaopen_audio (lua_State*);
 
 void register_lua_modules (lua_State* L) {
-    lua_requiref (L, "decibels", luaopen_decibels, 0);
+    lua_requiref (L, "audio", luaopen_audio, 0);
     lua_pop (L, 1);
 }
 ```

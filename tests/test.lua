@@ -104,7 +104,7 @@ local function test_midibuffer_foreach()
    expect (a:capacity() > 0)
    local tframe = 0
    local tick = 0
-   for data, size, evframe in a:iter() do
+   for data, size, evframe in a:events() do
       m:update (data, size)
 
       if tick % 4 == 0 or tick % 4 == 1 then
@@ -119,9 +119,27 @@ local function test_midibuffer_foreach()
       tframe = tframe + 10
       tick = tick + 1
    end
+
+   tframe = 0
+   tick = 0
+   local c = midi.Buffer()
+   c:swap (a)
+   for f in c:events(m) do
+      if tick % 4 == 0 or tick % 4 == 1 then
+         expect (m:channel() == 1)
+      else
+         expect (m:channel() == 5)
+      end
+
+      expect (tframe == f)
+      expect (m:channel(12) == 12)
+      expect (m:channel() == 12)
+      tframe = tframe + 10
+      tick = tick + 1
+   end
+
    expect (tick > 0 and tframe > 0)
-   b:clear()
-   a:clear()
+   for _, buf in pairs({ a, b, c}) do buf:clear() end
 end
 
 local tests = {
@@ -154,6 +172,6 @@ for i, t in ipairs (tests) do
       t.test()
       print(string.format("  elapsed time: %.3f (ms)", 1000.0 * (os.clock() - x)))
       if #tests ~= i then print("") end
+      collectgarbage()
    end
-   collectgarbage()
 end
