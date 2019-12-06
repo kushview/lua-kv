@@ -79,6 +79,27 @@ int lrt_audio_buffer_length (lrt_audio_buffer_t*);
 /** Returns an array of channels. DO NOT keep a reference to this. */
 lrt_sample_t** lrt_audio_buffer_array (lrt_audio_buffer_t*);
 
+/** Resize this buffer
+
+    @param buffer       Buffer to resize
+    @param nchannels    New channel count
+    @param nframes      New sample count
+    @param preserve     Keep existing content if possible
+    @param clear        Clear extra space
+    @param norealloc    Avoid re-allocating if possible
+*/
+void lrt_audio_buffer_resize (lrt_audio_buffer_t* buffer,
+                              int                 nchannels, 
+                              int                 nframes,
+                              bool                preserve, 
+                              bool                clear,
+                              bool                norealloc);
+void
+lrt_audio_buffer_duplicate_32 (lrt_audio_buffer_t* buffer,
+                               const float* const* source,
+                               int                 nchannels,
+                               int                 nframes);
+
 //=============================================================================
 /** Adds a new midi buffer to the stack */
 lrt_midi_buffer_t* lrt_midi_buffer_new (lua_State* L, size_t size);

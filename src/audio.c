@@ -204,8 +204,8 @@ static int audiobuffer_get (lua_State* L) {
         return 1;
     }
 
-    int channel = lua_tointeger (L, 2) - 1;
-    int frame   = lua_tointeger (L, 3) - 1;
+    lua_Integer channel = lua_tointeger (L, 2) - 1;
+    lua_Integer frame   = lua_tointeger (L, 3) - 1;
     lua_pushnumber (L, *(buf->channels[channel] + frame));
 
     return 1;
@@ -345,6 +345,55 @@ void lrt_audio_buffer_refer_to (lrt_audio_buffer_t*  buf,
 
 lrt_sample_t** lrt_audio_buffer_array (lrt_audio_buffer_t* buf) {
     return buf->channels;
+}
+
+void lrt_audio_buffer_resize (lrt_audio_buffer_t* buffer,
+                              int                 nchannels, 
+                              int                 nframes,
+                              bool                preserve, 
+                              bool                clear,
+                              bool                norealloc)
+{
+    if (nchannels == buffer->nchannels && nframes == buffer->nframes) {
+        return;
+    }
+
+    lrt_audio_buffer_free_data (buffer);
+    buffer->nchannels = nchannels;
+    buffer->nframes   = nframes;
+    lrt_audio_buffer_alloc_data (buffer);
+}
+
+void lrt_audio_buffer_duplicate (lrt_audio_buffer_t*        buffer,
+                                 const lrt_sample_t* const* source,
+                                 int                        nchannels,
+                                 int                        nframes)
+{
+    lrt_audio_buffer_resize (buffer, nchannels, nframes, false, false, true);
+
+    for (int c = 0; c < nchannels; ++c) {
+        const lrt_sample_t* src  = source [c];
+        lrt_sample_t* dst = buffer->channels [c];
+        for (int f = 0; f < nframes; ++f) {
+            dst[f] = src[f];
+        }
+    }
+}
+
+void lrt_audio_buffer_duplicate_32 (lrt_audio_buffer_t* buffer,
+                                    const float* const* source,
+                                    int                 nchannels,
+                                    int                 nframes)
+{
+    lrt_audio_buffer_resize (buffer, nchannels, nframes, false, false, true);
+
+    for (int c = 0; c < nchannels; ++c) {
+        const float* src  = source [c];
+        lrt_sample_t* dst = buffer->channels [c];
+        for (int f = 0; f < nframes; ++f) {
+            dst[f] = (lrt_sample_t) src[f];
+        }
+    }
 }
 
 lrt_audio_buffer_t*
