@@ -21,6 +21,18 @@ PERFORMANCE OF THIS SOFTWARE.
 extern "C" {
 #endif
 
+#ifdef __cplusplus
+ #define LRT_EXTERN extern "C"
+#else
+ #define LRT_EXTERN
+#endif
+
+#ifdef _WIN32
+ #define LRT_EXPORT LRT_EXTERN __declspec(dllexport)
+#else
+ #define LRT_EXPORT LRT_EXTERN __attribute__((visibility("default")))
+#endif
+
 #include <stdint.h>
 #include <lua.h>
 
@@ -96,15 +108,18 @@ void lrt_audio_buffer_resize (lrt_audio_buffer_t* buffer,
                               bool                preserve, 
                               bool                clear,
                               bool                norealloc);
-void
-lrt_audio_buffer_duplicate_32 (lrt_audio_buffer_t* buffer,
-                               const float* const* source,
-                               int                 nchannels,
-                               int                 nframes);
+
+void lrt_audio_buffer_duplicate_32 (lrt_audio_buffer_t* buffer,
+                                    const float* const* source,
+                                    int                 nchannels,
+                                    int                 nframes);
 
 //=============================================================================
 /** Adds a new midi buffer to the stack */
 lrt_midi_buffer_t* lrt_midi_buffer_new (lua_State* L, size_t size);
+
+/** Clears the buffer */
+void lrt_midi_buffer_clear (lrt_midi_buffer_t*);
 
 /** Inserts some MIDI data in the buffer */
 void lrt_midi_buffer_insert (lrt_midi_buffer_t* buf, uint8_t* bytes, size_t len, int frame);
@@ -130,16 +145,22 @@ for (lrt_midi_buffer_iter_t (i) = lrt_midi_buffer_begin ((b)); \
     i < lrt_midi_buffer_end ((b)); \
     i = lrt_midi_buffer_next ((b), (i)))
 
+/** Returns the total size in bytes of the iterator */
+#define lrt_midi_buffer_iter_total_size(i) (lua_Integer)(sizeof(int32_t) + sizeof(uint16_t) + *(uint16_t*)((i) + sizeof(int32_t)))
+
 /** Returns the frame index of this event */
 #define lrt_midi_buffer_iter_frame(i)   *(int32_t*)i
 
 /** Returns the data size of this event */
-#define lrt_midi_buffer_iter_size(i)    (int)(*(uint16_t*)(i + sizeof(int32_t)))
+#define lrt_midi_buffer_iter_size(i) (lua_Integer)(*(uint16_t*)(i + sizeof(int32_t)))
 
 /** Returns the raw MIDI data of this event
     Do not modify in any way
 */
-#define lrt_midi_buffer_iter_data(i)    (uint8_t*)i + (sizeof(int32_t) + sizeof(uint16_t))
+#define lrt_midi_buffer_iter_data(i) (uint8_t*)i + (sizeof(int32_t) + sizeof(uint16_t))
+
+//=============================================================================
+lrt_midi_pipe_t* lrt_midi_pipe_new (lua_State* L, int nbuffers);
 
 //=============================================================================
 /** Open all libraries

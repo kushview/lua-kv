@@ -43,11 +43,15 @@ def build_module (bld, name, source):
         install_path = '%s/lib/lua/5.3' % bld.env.PREFIX
     )
     if sys.platform == 'linux':
-        pass
+        mod.linkflags.append('-fPIC')
+        mod.linkflags.append('-fvisibility=hidden')
+        mod.cflags.append('-fvisibility=hidden')
     elif sys.platform == 'windows':
         pass
     elif sys.platform == 'darwin':
         mod.linkflags.append('-fPIC')
+        mod.linkflags.append('-fvisibility=hidden')
+        mod.cflags.append('-fvisibility=hidden')
         mod.mac_bundle = True
 
     return mod

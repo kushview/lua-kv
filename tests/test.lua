@@ -82,11 +82,11 @@ local function addnotes (b)
    local frame = 0
    for _ = 1, 1 do
       for note = 0, 127, 1 do
-         b:insert (frame, midi.noteon (1, note, math.random (0, 127)))
+         b:insert (frame, midi.noteon (1, note, math.random (1, 127)))
          frame = frame + 10
          b:insert (frame, midi.noteoff (1, note, 0))
          frame = frame + 10
-         b:insert (frame, midi.noteon (5, note, math.random (0, 127)))
+         b:insert (frame, midi.noteon (5, note, math.random (1, 127)))
          frame = frame + 10
          b:insert (frame, midi.noteoff (5, note, 0))
          frame = frame + 10
@@ -100,6 +100,12 @@ local function testnotes (b)
    local m = midi.Message()
 
    for f in b:events(m) do
+      if tick % 2 == 0 then
+         expect (m:noteon(), string.format("not note on: %s", tostring(m)))
+      else
+         expect (m:noteoff(), string.format("not note off: %s", tostring(m)))
+      end
+
       if tick % 4 == 0 or tick % 4 == 1 then
          expect (m:channel() == 1)
       else
@@ -109,6 +115,7 @@ local function testnotes (b)
       expect (frame == f)
       expect (m:channel(12) == 12)
       expect (m:channel() == 12)
+      expect (m:channel(100) == 12)
       frame = frame + 10
       tick = tick + 1
    end
@@ -120,29 +127,17 @@ local function test_midibuffer_foreach()
    begin_test ("iterate")
    local b = midi.Buffer (1024 * 10)
    local a = midi.Buffer()
-   local m = midi.Message()
-   local frame = 0
 
-   for _ = 1, 1 do
-      for note = 0, 127, 1 do
-         -- b:add (frame, 0x80, note, math.random (128) - 1)
-         b:insert (frame, midi.noteon (1, note, math.random (0, 127)))
-         frame = frame + 10
-         b:insert (frame, midi.noteoff (1, note, 0))
-         frame = frame + 10
-         b:insert (frame, midi.noteon (5, note, math.random (0, 127)))
-         frame = frame + 10
-         b:insert (frame, midi.noteoff (5, note, 0))
-         frame = frame + 10
-      end
-   end
+   addnotes (b)
 
    expect (a:capacity() == 0)
    a:swap (b);
    expect (a:capacity() > 0)
    local tframe = 0
    local tick = 0
+   local m = midi.Message()
    for data, size, evframe in a:events() do
+      expect (size == 3)
       m:update (data, size)
 
       if tick % 4 == 0 or tick % 4 == 1 then
@@ -158,45 +153,44 @@ local function test_midibuffer_foreach()
       tick = tick + 1
    end
 
-   tframe = 0
-   tick = 0
+   begin_test ("swap/reserve")
    local c = midi.Buffer()
    c:swap (a)
-   for f in c:events(m) do
-      if tick % 4 == 0 or tick % 4 == 1 then
-         expect (m:channel() == 1)
-      else
-         expect (m:channel() == 5)
-      end
+   local oc = c:capacity()
+   c:reserve (c:capacity() + 100)
+   expect (c:capacity() == oc + 100)
+   testnotes (c)
 
-      expect (tframe == f)
-      expect (m:channel(12) == 12)
-      expect (m:channel() == 12)
-      tframe = tframe + 10
-      tick = tick + 1
-   end
-
-   expect (tick > 0 and tframe > 0)
+   begin_test ("clear")
    for _, buf in pairs({ a, b, c}) do buf:clear() end
 end
 
 local function test_midipipe()
-   local pipe = midi.Pipe (2)
-   print (pipe)
-   print (pipe.clear)
-   print (pipe.get)
-   begin_test("__index")
-   expect (pipe[0] == nil)
-   begin_test("add notes")
-   addnotes (pipe[1])
-   begin_test("check notes")
-   testnotes (pipe[1])
-   begin_test ("external swap")
-   pipe[1]:swap (pipe[2])
-   testnotes (pipe[2])
-   begin_test ("clear")
-   print (pipe.clear)
-   print (pipe.get)
+   for _ = 1, 1 do
+      local nbufs = 50
+      local mp = midi.Pipe (nbufs)
+
+      begin_test (tostring (mp))
+      expect (mp[1] == nil, "__index[:int] should always be nil")
+
+      begin_test ("__len")
+      expect (#mp == nbufs)
+
+      begin_test ("add notes")
+      addnotes (mp:get(1))
+
+      begin_test ("check notes")
+      testnotes (mp:get(1))
+
+      begin_test ("external swap")
+      local mb = midi.Buffer()
+      mb:swap (mp:get(1))
+      testnotes (mb)
+
+      for i = 1, #mp do mp:get(i):clear() end
+      begin_test ("clear")
+      mp:clear()
+   end
 end
 
 local tests = {
@@ -227,7 +221,7 @@ local tests = {
 }
 
 for i, t in ipairs (tests) do
-    if (type(t.test) == 'function') then
+   if (type(t.test) == 'function') then
       print (string.format ("Testing: %s", tostring (t.name)))
       local x = os.clock()
       t.test()
@@ -236,3 +230,7 @@ for i, t in ipairs (tests) do
       collectgarbage()
    end
 end
+
+local packed = midi.controller (1, 0x34, 128 / 2);
+local msg    = midi.Message (packed)
+print (msg:controller(), msg)

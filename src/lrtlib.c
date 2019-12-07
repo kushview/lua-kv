@@ -27,9 +27,11 @@ static const luaL_Reg lrtmods[] = {
 };
 
 void lrt_openlibs (lua_State* L, int glb) {
+    const int top = lua_gettop (L);
     const luaL_Reg* mod = NULL;
     for (mod = lrtmods; mod->func; mod++) {
         luaL_requiref (L, mod->name, mod->func, glb);
         lua_pop (L, 1);  /* remove lib */
     }
+    assert (top == lua_gettop (L));
 }

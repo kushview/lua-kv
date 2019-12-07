@@ -130,7 +130,7 @@ static void test_foreach (lua_State* L) {
 
     lrt_midi_buffer_foreach (buf, i) {
         printf ("frame=%d\n", lrt_midi_buffer_iter_frame (i));
-        printf ("len=%d\n", lrt_midi_buffer_iter_size (i));
+        printf ("len=%lld\n", lrt_midi_buffer_iter_size (i));
         uint8_t* data = lrt_midi_buffer_iter_data (i);
         printf ("data1=0x%02x data2=0x%02x data3=0x%02x\n", data[0], data[1], data[2]);
         printf ("\n");

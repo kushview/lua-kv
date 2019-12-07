@@ -422,9 +422,7 @@ static int audiobuffer_new (lua_State* L) {
     return 1;
 }
 
-
-
-int luaopen_audio (lua_State* L) {
+LRT_EXPORT int luaopen_audio (lua_State* L) {
     luaL_newmetatable (L, LRT_MT_AUDIO_BUFFER);
     lua_pushvalue (L, -1);               /* duplicate the metatable */
     lua_setfield (L, -2, "__index");     /* mt.__index = mt */
