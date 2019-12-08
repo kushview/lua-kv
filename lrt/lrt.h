@@ -58,19 +58,13 @@ typedef void*                               lrt_midi_buffer_iter_t;
 typedef struct lrt_midi_pipe_impl_t         lrt_midi_pipe_t;
 
 /** Adds a new audio buffer to the lua stack
-    @param L            The lua state
-    @param nchannels    Total audio channels
-    @param nframes      Number of samples in each channel
+    @param L                The lua state
+    @param num_channels     Total audio channels
+    @param num_frames       Number of samples in each channel
 */
-lrt_audio_buffer_t* lrt_audio_bufer_new (lua_State* L, 
-                                         int        nchannels, 
-                                         int        nframes);
-
-/** Returns the underlying C-object 
-    @param L        The lua state
-    @param index    Index of the buffer on the stack
-*/
-lrt_audio_buffer_t* lrt_audio_buffer_handle (lua_State* L, int index);
+lrt_audio_buffer_t* lrt_audio_bufer_new (lua_State* L,
+                                         int        num_channels,
+                                         int        num_frames);
 
 /** Refer the given buffer to a set of external audio channels
  
@@ -93,6 +87,9 @@ int lrt_audio_buffer_length (lrt_audio_buffer_t*);
 /** Returns an array of channels. DO NOT keep a reference to this. */
 lrt_sample_t** lrt_audio_buffer_array (lrt_audio_buffer_t*);
 
+/** Returns a single channel of samples */
+lrt_sample_t* lrt_audio_buffer_channel (lrt_audio_buffer_t*, int channel);
+
 /** Resize this buffer
 
     @param buffer       Buffer to resize
@@ -108,6 +105,11 @@ void lrt_audio_buffer_resize (lrt_audio_buffer_t* buffer,
                               bool                preserve, 
                               bool                clear,
                               bool                norealloc);
+
+void lrt_audio_buffer_duplicate (lrt_audio_buffer_t*        buffer,
+                                 const lrt_sample_t* const* source,
+                                 int                        nchannels,
+                                 int                        nframes);
 
 void lrt_audio_buffer_duplicate_32 (lrt_audio_buffer_t* buffer,
                                     const float* const* source,

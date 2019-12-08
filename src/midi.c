@@ -24,23 +24,29 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "util.h"
 #include "lrt/lrt.h"
 
+#define MSG_DATA_SIZE sizeof(uint8_t*)
+
 typedef union _midi_data_t {
-    uint8_t* data;
-    uint8_t bytes [sizeof (uint8_t*)];
+    uint8_t*    data;
+    uint8_t     bytes [MSG_DATA_SIZE];
 } midi_data_t;
 
 struct lrt_midi_message_impl_t {
     midi_data_t data;
-    bool allocated;
     lua_Integer size;
     lua_Number  time;
+    bool        allocated;
 };
 
+typedef struct lrt_midi_message_impl_t  MidiMessage;
+
 struct lrt_midi_buffer_impl_t {
-    uint8_t* data;
+    uint8_t*    data;
     lua_Integer size;
     lua_Integer used;
 };
+
+typedef struct lrt_midi_buffer_impl_t   MidiBuffer;
 
 struct lrt_midi_pipe_impl_t {
     lua_Integer         size;
@@ -48,14 +54,9 @@ struct lrt_midi_pipe_impl_t {
     int*                mbrefs;
 };
 
-typedef struct lrt_midi_message_impl_t  MidiMessage;
-typedef struct lrt_midi_buffer_impl_t   MidiBuffer;
 typedef struct lrt_midi_pipe_impl_t     MidiPipe;
 
-lrt_midi_pipe_t* 
-lrt_midi_pipe_new (lua_State* L, int nbuffers) {
-    lrt_midi_pipe_t* pipe = lua_newuserdata (L, sizeof (MidiPipe));
-    pipe->size    = MAX (0, nbuffers);
+static void lrt_midi_pipe_alloc (lua_State* L, lrt_midi_pipe_t* pipe) {
     pipe->buffers = malloc (sizeof(lrt_midi_buffer_t*) * (pipe->size + 1));
     pipe->mbrefs  = malloc (sizeof(int) * (pipe->size + 1));
 
@@ -67,17 +68,50 @@ lrt_midi_pipe_new (lua_State* L, int nbuffers) {
 
     pipe->buffers[pipe->size] = NULL;
     pipe->mbrefs[pipe->size]  = LUA_NOREF;
+}
 
+lrt_midi_pipe_t* lrt_midi_pipe_new (lua_State* L, int nbuffers) {
+    lrt_midi_pipe_t* pipe = lua_newuserdata (L, sizeof (MidiPipe));
+    pipe->size = MAX (0, nbuffers);
+    lrt_midi_pipe_alloc (L, pipe);
     luaL_setmetatable (L, LRT_MT_MIDI_PIPE);
     return pipe;
 }
 
-void lrt_midi_buffer_clear (lrt_midi_buffer_t* buf) {
-    buf->used = 0;
+static void lrt_midi_pipe_free_buffers (lua_State* L, lrt_midi_pipe_t* pipe) {
+    for (int i = 0; i < pipe->size; ++i) {
+        luaL_unref (L, LUA_REGISTRYINDEX, pipe->mbrefs[i]);
+        pipe->mbrefs[i]  = LUA_NOREF;
+        pipe->buffers[i] = NULL;
+    }
+
+    pipe->size = 0;
+    
+    if (pipe->buffers != NULL) {
+        free (pipe->buffers);
+        pipe->buffers = NULL;
+    }
+
+    if (pipe->mbrefs != NULL) {
+        free (pipe->mbrefs);
+        pipe->mbrefs = NULL;
+    }
 }
 
-static void
-lrt_midi_message_init (lrt_midi_message_t* msg) {
+//=============================================================================
+static uint8_t* lrt_midi_message_data (lrt_midi_message_t* msg) {
+    return msg->allocated ? msg->data.data : (uint8_t*) msg->data.bytes;
+}
+
+static void lrt_midi_message_update (lrt_midi_message_t* msg, 
+                                     uint8_t*            data, 
+                                     lua_Integer         size)
+{
+    memcpy (lrt_midi_message_data (msg), data, size);
+    msg->size = size;
+}
+
+static void lrt_midi_message_init (lrt_midi_message_t* msg) {
     msg->allocated = false;
     for (size_t i = 0; i < sizeof (uint8_t*); ++i)
         msg->data.bytes[i] = 0x00;
@@ -87,13 +121,8 @@ lrt_midi_message_init (lrt_midi_message_t* msg) {
     msg->size = 2;
 }
 
-static uint8_t*
-lrt_midi_message_data (lrt_midi_message_t* msg) {
-    return msg->allocated ? msg->data.data : (uint8_t*) msg->data.bytes;
-}
-
-static lrt_midi_buffer_t* 
-lrt_midi_buffer_init (lrt_midi_buffer_t* buf, size_t size) {
+//=============================================================================
+static lrt_midi_buffer_t* lrt_midi_buffer_init (lrt_midi_buffer_t* buf, size_t size) {
     buf->used = 0;
 
     if (size > 0) {
@@ -107,8 +136,7 @@ lrt_midi_buffer_init (lrt_midi_buffer_t* buf, size_t size) {
     return buf;
 }
 
-lrt_midi_buffer_t* 
-lrt_midi_buffer_new (lua_State* L, size_t size) {
+lrt_midi_buffer_t* lrt_midi_buffer_new (lua_State* L, size_t size) {
     size = MAX(0, size);
     MidiBuffer* buf = lua_newuserdata (L, sizeof (MidiBuffer));
     lrt_midi_buffer_init (buf, size);
@@ -116,8 +144,7 @@ lrt_midi_buffer_new (lua_State* L, size_t size) {
     return buf;
 }
 
-static void
-lrt_midi_buffer_free_data (lrt_midi_buffer_t* buf) {
+static void lrt_midi_buffer_free_data (lrt_midi_buffer_t* buf) {
     if (buf->data != NULL) {
         free (buf->data);
         buf->data = NULL;
@@ -125,10 +152,13 @@ lrt_midi_buffer_free_data (lrt_midi_buffer_t* buf) {
     buf->size = buf->used = 0;
 }
 
-static void 
-lrt_midi_buffer_free (lrt_midi_buffer_t* buf) {
+static void lrt_midi_buffer_free (lrt_midi_buffer_t* buf) {
     lrt_midi_buffer_free_data (buf);
     free (buf);
+}
+
+void lrt_midi_buffer_clear (lrt_midi_buffer_t* buf) {
+    buf->used = 0;
 }
 
 static void lrt_midi_buffer_swap (lrt_midi_buffer_t* a, lrt_midi_buffer_t* b) {
@@ -145,25 +175,10 @@ static void lrt_midi_buffer_swap (lrt_midi_buffer_t* a, lrt_midi_buffer_t* b) {
     a->data = (uint8_t*)((uintptr_t)a->data - (uintptr_t)b->data);
 }
 
-static void 
-lrt_midi_message_update (lrt_midi_message_t* msg, 
-                         uint8_t*            data, 
-                         lua_Integer         size)
-{
-    memcpy (lrt_midi_message_data (msg), data, size);
-    // printf("A: 0x%02x n: %d v: %d\n", data[0], data[1], data[2]);
-    // printf("B: 0x%02x n: %d v: %d\n", 
-    //         lrt_midi_message_data (msg)[0],
-    //         lrt_midi_message_data (msg)[1],
-    //         lrt_midi_message_data (msg)[2]);
-    msg->size = size;
-}
-
-void 
-lrt_midi_buffer_insert (lrt_midi_buffer_t* buf, 
-                        uint8_t*           bytes, 
-                        size_t             len, 
-                        int                frame)
+void lrt_midi_buffer_insert (lrt_midi_buffer_t* buf, 
+                             uint8_t*           bytes, 
+                             size_t             len, 
+                             int                frame)
 {
     const int32_t iframe = (int32_t) frame;
     const int16_t ulen   = (uint16_t) len;
@@ -194,23 +209,20 @@ lrt_midi_buffer_insert (lrt_midi_buffer_t* buf,
     buf->used += needed;
 }
 
-lrt_midi_buffer_iter_t 
-lrt_midi_buffer_begin (lrt_midi_buffer_t* buf) {
+lrt_midi_buffer_iter_t lrt_midi_buffer_begin (lrt_midi_buffer_t* buf) {
     return buf->data;
 }
 
-lrt_midi_buffer_iter_t 
-lrt_midi_buffer_end (lrt_midi_buffer_t* buf) {
+lrt_midi_buffer_iter_t lrt_midi_buffer_end (lrt_midi_buffer_t* buf) {
     return buf->data + buf->used;
 }
 
-lrt_midi_buffer_iter_t 
-lrt_midi_buffer_next (lrt_midi_buffer_t*     buf, 
-                      lrt_midi_buffer_iter_t iter)
+lrt_midi_buffer_iter_t lrt_midi_buffer_next (lrt_midi_buffer_t*     buf, 
+                                             lrt_midi_buffer_iter_t iter)
 {
     iter += lrt_midi_buffer_iter_total_size (iter);
-    return ((uint8_t*)iter) <= (buf->data + buf->used) 
-        ? iter : buf->data + buf->used;
+    return ((uint8_t*)iter) <= (buf->data + buf->used)
+        ? iter : (buf->data + buf->used);
 }
 
 //=============================================================================
@@ -469,22 +481,13 @@ static int midipipe_new (lua_State* L) {
         nbuffers = MAX (0, lua_tointeger (L, 1));
     }
 
-    lrt_midi_pipe_new (L, (int) nbuffers);
+    lrt_midi_pipe_new (L, nbuffers);
     return 1;
 }
 
 static int midipipe_gc (lua_State* L) {
     MidiPipe* pipe = lua_touserdata (L, 1);
-    pipe->size = 0;
-
-    for (int i = 0; i < pipe->size; ++i) {
-        luaL_unref (L, LUA_REGISTRYINDEX, pipe->mbrefs[i]);
-        pipe->mbrefs[i]  = LUA_NOREF;
-        pipe->buffers[i] = NULL;
-    }
-    
-    free (pipe->buffers);
-    free (pipe->mbrefs);
+    lrt_midi_pipe_free_buffers (L, pipe);
     return 0;
 }
 
@@ -504,8 +507,7 @@ static int midipipe_clear (lua_State* L) {
     MidiPipe* pipe = lua_touserdata (L, 1);
 
     if (lua_gettop(L) > 1) {
-        lua_Integer i = lua_tointeger (L, 2);
-        assert(i > 0 && i < pipe->size);
+        lua_Integer i = lua_tointeger (L, 2) - 1;
         lrt_midi_buffer_clear (pipe->buffers [i]);
     } else {
         for (int i = 0; i < pipe->size; ++i) {
@@ -528,9 +530,6 @@ static int midipipe_get (lua_State* L) {
 }
 
 static int midipipe_index (lua_State* L) {
-    // printf ("__index from mm: nargs = %d\n", lua_gettop( L));
-    // printf ("1 = %s\n", luaL_typename (L, 1));
-    // printf ("2 = %s\n", luaL_typename (L, 2));
     MidiPipe* pipe = lua_touserdata (L, 1);
     if (lua_isinteger (L, 2)) {
         lua_Integer index = lua_tointeger (L, 3) - 1;
