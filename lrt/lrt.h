@@ -33,6 +33,7 @@ extern "C" {
  #define LRT_EXPORT LRT_EXTERN __attribute__((visibility("default")))
 #endif
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <lua.h>
 
@@ -62,9 +63,9 @@ typedef struct lrt_midi_pipe_impl_t         lrt_midi_pipe_t;
     @param num_channels     Total audio channels
     @param num_frames       Number of samples in each channel
 */
-lrt_audio_buffer_t* lrt_audio_bufer_new (lua_State* L,
-                                         int        num_channels,
-                                         int        num_frames);
+lrt_audio_buffer_t* lrt_audio_buffer_new (lua_State* L,
+                                          int        num_channels,
+                                          int        num_frames);
 
 /** Refer the given buffer to a set of external audio channels
  
