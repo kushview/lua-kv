@@ -402,7 +402,9 @@ static const luaL_Reg audio_f[] = {
     { "Buffer",     audiobuffer_new },
     { "round",      f_round },
     { "db2gain",    f_dbtogain },
+    { "dbtogain",   f_dbtogain },
     { "gain2db",    f_gain2db },
+    { "gaintodb",   f_gain2db },
     { NULL, NULL }
 };
 
