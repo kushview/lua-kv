@@ -29,6 +29,11 @@ PERFORMANCE OF THIS SOFTWARE.
 #define LRT_UNITY_GAIN          1.0
 #define LRT_NPREALLOC           32
 
+struct lrt_vector_impl_t {
+    lrt_sample_t*   values;
+    lua_Integer     size;
+};
+
 struct lrt_audio_buffer_impl_t {
     int nframes;                            // sample count
     int nchannels;                          // channel count
@@ -37,15 +42,13 @@ struct lrt_audio_buffer_impl_t {
     lrt_sample_t** channels;                // channels actually used
     lrt_sample_t* prealloc [LRT_NPREALLOC]; // pre-allocated channel space
     bool cleared;                           // true if buffer has been cleared
+
+    lrt_vector_t**  vectors;
+    int*            vecrefs;
 };
 
-struct lrt_vector_impl_t {
-    lrt_sample_t*   values;
-    lua_Integer     size;
-};
-
-typedef struct lrt_audio_buffer_impl_t  AudioBuffer;
 typedef struct lrt_vector_impl_t        Vector;
+typedef struct lrt_audio_buffer_impl_t  AudioBuffer;
 
 static lrt_vector_t* lrt_vector_new (lua_State* L, int size) {
     Vector* vec = lua_newuserdata (L, sizeof(Vector));
@@ -134,6 +137,8 @@ static void lrt_audio_buffer_init (AudioBuffer* buf) {
     buf->nframes = buf->nchannels = 0;
     buf->size = 0;
     buf->data = NULL;
+    buf->vecrefs = NULL;
+    buf->vectors = NULL;
     memset (buf->prealloc, 0, sizeof(lrt_sample_t*) * LRT_NPREALLOC);
     buf->channels = (lrt_sample_t**) buf->prealloc;
     buf->cleared = false;
@@ -157,6 +162,7 @@ static void lrt_audio_buffer_alloc_data (AudioBuffer* buf) {
     }
 
     buf->channels[buf->nchannels] = NULL;
+
     buf->cleared = false;
 }
 
@@ -180,18 +186,61 @@ static void lrt_audio_buffer_alloc_channels (AudioBuffer* buf, lrt_sample_t* con
     buf->cleared = false;
 }
 
+static void lrt_audio_buffer_free_vectors (lua_State* L, lrt_audio_buffer_t* buf) {
+    if (buf->vectors == NULL || buf->vecrefs == NULL) {
+        return;
+    }
+    
+    for (int c = 0; c < buf->nchannels; ++c) {
+        buf->vectors[c] = NULL;
+        luaL_unref (L, LUA_REGISTRYINDEX, buf->vecrefs[c]);
+        buf->vecrefs[c] = LUA_NOREF;
+    }
+
+    free (buf->vectors);
+    buf->vectors = NULL;
+    free (buf->vecrefs);
+    buf->vecrefs = NULL;
+}
+
+static void lrt_audio_buffer_free_data (AudioBuffer* buf);
+
+static void lrt_audio_buffer_create_vectors (lua_State* L, lrt_audio_buffer_t* buf) {
+    lrt_audio_buffer_free_data (buf);
+    lrt_audio_buffer_free_vectors (L, buf);
+    
+    buf->vectors = malloc (sizeof (lrt_vector_t*) * (buf->nchannels + 1));
+    buf->vecrefs = malloc (sizeof (int) * (buf->nchannels + 1));
+    buf->channels = (lrt_sample_t**) buf->prealloc;
+
+    int c;
+    for (c = 0; c < buf->nchannels; ++c) {
+        Vector* vec = lrt_vector_new (L, buf->nframes);
+        buf->vectors[c]  = vec;
+        buf->channels[c] = vec->values;
+        buf->vecrefs[c]  = luaL_ref (0, LUA_REGISTRYINDEX);
+    }
+    buf->vectors[buf->nchannels] = NULL;
+    buf->vecrefs[buf->nchannels] = LUA_REFNIL;
+
+    for (c = buf->nchannels; c < LRT_NPREALLOC; ++c) {
+        buf->prealloc[c] = NULL;
+    }
+}
+
 lrt_audio_buffer_t* lrt_audio_buffer_new (lua_State* L,
                                           int        nchans, 
                                           int        nframes)
 {
     AudioBuffer* buf = lua_newuserdata (L, sizeof (AudioBuffer));
     luaL_setmetatable (L, LRT_MT_AUDIO_BUFFER);
-
     lrt_audio_buffer_init (buf);
+
     if (nchans > 0 && nframes > 0) {
         buf->nchannels = nchans;
         buf->nframes   = nframes;
         lrt_audio_buffer_alloc_data (buf);
+        lrt_audio_buffer_create_vectors (L, buf);
     }
 
     return buf;
@@ -201,7 +250,7 @@ static void lrt_audio_buffer_free_data (AudioBuffer* buf) {
     if (buf->size != 0 && buf->data != NULL) {
         free (buf->data);
         buf->size = 0;
-        buf->data = NULL;  
+        buf->data = NULL; 
     }
 }
 
