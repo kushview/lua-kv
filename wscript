@@ -1,5 +1,6 @@
 
 import os, re, sys
+from subprocess import call
 
 def options(opt):
     opt.load ('compiler_c')
@@ -67,3 +68,15 @@ def build (bld):
         using       = [ 'LUA', 'LUA_LIB' ],
         linkflags   = [ '-llua' ]
     )
+
+def check (ctx):
+    if not os.path.exists('build/test'):
+        ctx.fatal ("Binary tests not compiled")
+        return
+    if 0 != call (["build/test"]):
+        ctx.fatal ("Tests failed")
+    if not os.path.exists('build/test'):
+        ctx.fatal ("Binary tests not compiled")
+        return
+    if 0 != call (["tests/testmods"]):
+        ctx.fatal ("Tests failed")
