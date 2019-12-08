@@ -45,6 +45,7 @@ extern "C" {
 #define LRT_MT_MIDI_MESSAGE                 "*lrt_midi_message_t"
 #define LRT_MT_MIDI_BUFFER                  "*lrt_midi_buffer_t"
 #define LRT_MT_MIDI_PIPE                    "*lrt_midi_pipe_t"
+#define LRT_MT_VECTOR                       "*lrt_vector_t"
 
 #if LRT_FORCE_FLOAT32
 typedef float                               lrt_sample_t;
@@ -57,6 +58,7 @@ typedef struct lrt_midi_message_impl_t      lrt_midi_message_t;
 typedef struct lrt_midi_buffer_impl_t       lrt_midi_buffer_t;
 typedef void*                               lrt_midi_buffer_iter_t;
 typedef struct lrt_midi_pipe_impl_t         lrt_midi_pipe_t;
+typedef struct lrt_vector_impl_t            lrt_vector_t;
 
 /** Adds a new audio buffer to the lua stack
     @param L                The lua state
@@ -125,7 +127,7 @@ lrt_midi_buffer_t* lrt_midi_buffer_new (lua_State* L, size_t size);
 void lrt_midi_buffer_clear (lrt_midi_buffer_t*);
 
 /** Inserts some MIDI data in the buffer */
-void lrt_midi_buffer_insert (lrt_midi_buffer_t* buf, uint8_t* bytes, size_t len, int frame);
+void lrt_midi_buffer_insert (lrt_midi_buffer_t* buf, const uint8_t* bytes, size_t len, int frame);
 
 /** Returns the start iterator
     Do not modify the retured iterator in any way
@@ -155,7 +157,7 @@ for (lrt_midi_buffer_iter_t (i) = lrt_midi_buffer_begin ((b)); \
 #define lrt_midi_buffer_iter_frame(i)   *(int32_t*)i
 
 /** Returns the data size of this event */
-#define lrt_midi_buffer_iter_size(i) (lua_Integer)(*(uint16_t*)(i + sizeof(int32_t)))
+#define lrt_midi_buffer_iter_size(i) (lua_Integer)(*(uint16_t*)((uint8_t*)i + sizeof(int32_t)))
 
 /** Returns the raw MIDI data of this event
     Do not modify in any way
@@ -163,7 +165,17 @@ for (lrt_midi_buffer_iter_t (i) = lrt_midi_buffer_begin ((b)); \
 #define lrt_midi_buffer_iter_data(i) (uint8_t*)i + (sizeof(int32_t) + sizeof(uint16_t))
 
 //=============================================================================
+/** Create a new midi pipe on the stack */
 lrt_midi_pipe_t* lrt_midi_pipe_new (lua_State* L, int nbuffers);
+
+/** Clear buffers in the pipe */
+void lrt_midi_pipe_clear (lrt_midi_pipe_t*, int);
+
+/** Change the number of buffers contained */
+void lrt_midi_pipe_resize (lua_State* L, lrt_midi_pipe_t*, int);
+
+/** Returns a buffer from the list */
+lrt_midi_buffer_t* lrt_midi_pipe_get (lrt_midi_pipe_t*, int);
 
 //=============================================================================
 /** Open all libraries

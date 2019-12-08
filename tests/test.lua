@@ -15,6 +15,14 @@
 local audio = require ("audio")
 local midi  = require ("midi")
 
+local function bar(size)
+   if type(size) ~= 'number' then size = 40 end
+   size = math.tointeger (size)
+   local out = ""
+   for _ = 1,size do out = out.."-" end
+   print (out)
+end
+
 local function expect (result, msg)
    assert (result, msg or "failed!")
 end
@@ -193,6 +201,31 @@ local function test_midipipe()
    end
 end
 
+local vecsize = 44100 * 10
+local function test_vector()
+   local vec = audio.Vector (vecsize)
+   vec = nil; collectgarbage(); vec = audio.Vector (vecsize)
+   begin_test (tostring (vec))
+
+   expect (#vec == vecsize, string.format ("%d != %d", #vec, vecsize))
+   for i, val in ipairs (vec) do
+      expect (val == 0.0, string.format ("%f != %f", val, 0.0))
+      vec[i] = 100.0
+   end
+   for _, val in ipairs (vec) do
+      expect (val == 100.0, string.format ("%f != %f", val, 100.0))
+   end
+   audio.clear (vec)
+   for i, val in ipairs (vec) do
+      expect (val == 0.0, string.format ("%f != %f", val, 0.0))
+   end
+end
+
+local function test_vector_clear()
+   local vec = audio.Vector (vecsize)
+   for _ = 1, 1 do audio.clear (vec) end
+end
+
 local tests = {
    {
       name = "audio dB conversions",
@@ -217,20 +250,38 @@ local tests = {
    {
       name = "midi.Pipe",
       test = test_midipipe
+   },
+   {
+      name = "audio.Vector",
+      test = test_vector
+   },
+   {
+      name = "audio.Vector (clear 1)",
+      test = test_vector_clear
+   },
+   {
+      name = "audio.Vector (clear 2)",
+      test = test_vector_clear
    }
 }
 
+local st = os.clock()
+local completed = 0
 for i, t in ipairs (tests) do
    if (type(t.test) == 'function') then
+      bar()
       print (string.format ("Testing: %s", tostring (t.name)))
       local x = os.clock()
       t.test()
       print(string.format("  elapsed time: %.3f (ms)", 1000.0 * (os.clock() - x)))
-      if #tests ~= i then print("") end
+      print("")
       collectgarbage()
+      completed = completed + 1
    end
 end
 
-local packed = midi.controller (1, 0x34, 128 / 2);
-local msg    = midi.Message (packed)
-print (msg:controller(), msg)
+bar()
+print (string.format ("Tests completed: %d", completed))
+print (string.format ("Tests skipped: %d", #tests - completed))
+bar()
+print (string.format ("Total time: %.3f (s)", os.clock() - st))

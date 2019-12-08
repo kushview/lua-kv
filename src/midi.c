@@ -50,6 +50,7 @@ typedef struct lrt_midi_buffer_impl_t   MidiBuffer;
 
 struct lrt_midi_pipe_impl_t {
     lua_Integer         size;
+    lua_Integer         used;
     lrt_midi_buffer_t** buffers;
     int*                mbrefs;
 };
@@ -72,7 +73,7 @@ static void lrt_midi_pipe_alloc (lua_State* L, lrt_midi_pipe_t* pipe) {
 
 lrt_midi_pipe_t* lrt_midi_pipe_new (lua_State* L, int nbuffers) {
     lrt_midi_pipe_t* pipe = lua_newuserdata (L, sizeof (MidiPipe));
-    pipe->size = MAX (0, nbuffers);
+    pipe->size = pipe->used = MAX (0, nbuffers);
     lrt_midi_pipe_alloc (L, pipe);
     luaL_setmetatable (L, LRT_MT_MIDI_PIPE);
     return pipe;
@@ -85,7 +86,7 @@ static void lrt_midi_pipe_free_buffers (lua_State* L, lrt_midi_pipe_t* pipe) {
         pipe->buffers[i] = NULL;
     }
 
-    pipe->size = 0;
+    pipe->size = pipe->used = 0;
     
     if (pipe->buffers != NULL) {
         free (pipe->buffers);
@@ -96,6 +97,35 @@ static void lrt_midi_pipe_free_buffers (lua_State* L, lrt_midi_pipe_t* pipe) {
         free (pipe->mbrefs);
         pipe->mbrefs = NULL;
     }
+}
+
+void lrt_midi_pipe_clear (lrt_midi_pipe_t* pipe, int index) {
+    if (index < 0) {
+        for (int i = 0; i < pipe->used; ++i) {
+            pipe->buffers[i]->used = 0;
+        }
+    } else {
+        pipe->buffers[index]->used = 0;
+    }
+}
+
+void lrt_midi_pipe_resize (lua_State* L, lrt_midi_pipe_t* pipe, int nbufs) {
+    if (nbufs == pipe->used) {
+        return;
+    }
+
+    if (nbufs < pipe->size) {
+        pipe->used = nbufs;
+        return;
+    }
+
+    lrt_midi_pipe_free_buffers (L, pipe);
+    pipe->used = pipe->size = nbufs;
+    lrt_midi_pipe_alloc (L, pipe);
+}
+
+lrt_midi_buffer_t* lrt_midi_pipe_get (lrt_midi_pipe_t* pipe, int index) {
+    return pipe->buffers [index];
 }
 
 //=============================================================================
@@ -176,7 +206,7 @@ static void lrt_midi_buffer_swap (lrt_midi_buffer_t* a, lrt_midi_buffer_t* b) {
 }
 
 void lrt_midi_buffer_insert (lrt_midi_buffer_t* buf, 
-                             uint8_t*           bytes, 
+                             const uint8_t*     bytes, 
                              size_t             len, 
                              int                frame)
 {

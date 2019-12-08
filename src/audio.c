@@ -39,7 +39,95 @@ struct lrt_audio_buffer_impl_t {
     bool cleared;                           // true if buffer has been cleared
 };
 
-typedef struct lrt_audio_buffer_impl_t AudioBuffer;
+struct lrt_vector_impl_t {
+    lrt_sample_t*   values;
+    lua_Integer     size;
+};
+
+typedef struct lrt_audio_buffer_impl_t  AudioBuffer;
+typedef struct lrt_vector_impl_t        Vector;
+
+static lrt_vector_t* lrt_vector_new (lua_State* L, int size) {
+    Vector* vec = lua_newuserdata (L, sizeof(Vector));
+    luaL_setmetatable (L, LRT_MT_VECTOR);
+
+    if (size > 0) {
+        vec->size = size;
+        vec->values = malloc (sizeof(lrt_sample_t) * size);
+        memset (vec->values, 0, sizeof(lrt_sample_t) * size);
+    } else {
+        vec->size   = 0;
+        vec->values = NULL;
+    }
+
+    return vec;
+}
+
+static void lrt_vector_free_values (lrt_vector_t* vec) {
+    if (vec->values != NULL) {
+        free (vec->values);
+        vec->values = NULL;
+    }
+    vec->size = 0;
+}
+
+static void lrt_vector_clear (lrt_vector_t* vec) {
+    if (vec->size > 0) {
+        memset (vec->values, 0, sizeof(lrt_sample_t) * vec->size);
+    }
+}
+
+static int vector_new (lua_State* L) {
+    lrt_vector_new (L, MAX (0, lua_tointeger (L, 1)));
+    return 1;
+}
+
+static int vector_gc (lua_State* L) {
+    lrt_vector_free_values (lua_touserdata (L, 1));
+    return 0;
+}
+
+static int vector_len (lua_State* L) {
+    Vector* vec = lua_touserdata (L, 1);
+    lua_pushinteger (L, vec->size);
+    return 1;
+}
+
+static int vector_index (lua_State* L) {
+    Vector* vec = lua_touserdata (L, 1);
+    lua_Integer i = lua_tointeger (L, 2) - 1;
+    if (i >= 0 && i < vec->size) {
+        lua_pushinteger (L, vec->values[i]);
+    } else {
+        lua_pushnil (L);
+    }
+    return 1;
+}
+
+static int vector_newindex (lua_State* L) {
+    Vector* vec = lua_touserdata (L, 1);
+    lua_Integer i = lua_tointeger (L, 2) - 1;
+    lua_Number  v = lua_tonumber (L, 3);
+    if (i >= 0 && i < vec->size) {
+        vec->values[i] = v;
+    }
+    return 0;
+}
+
+static int vector_tostring (lua_State* L) {
+    Vector* vec = lua_touserdata (L, 1);
+    lua_pushfstring (L, "Vector: size=%d", vec->size);
+    return 1;
+}
+
+static const luaL_Reg vector_m[] = {
+    { "__gc",       vector_gc },
+    { "__len",      vector_len },
+    { "__index",    vector_index },
+    { "__newindex", vector_newindex },
+    { "__tostring", vector_tostring },
+    { NULL, NULL}
+};
 
 //=============================================================================
 static void lrt_audio_buffer_init (AudioBuffer* buf) {
@@ -329,14 +417,13 @@ static int audiobuffer_raw (lua_State* L) {
 
 static int audiobuffer_applygain (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
-    int chan  = lua_tointeger (L, 2);
-    int start = lua_tointeger (L, 3);
-    int count = lua_tointeger (L, 4);
-    lua_Number gain  = lua_tonumber (L, 5);
+    lua_Integer chan  = lua_tointeger (L, 2) - 1;
+    lua_Integer start = lua_tointeger (L, 3) - 1;
+    lua_Integer count = lua_tointeger (L, 4);
+    lua_Number gain = lua_tonumber (L, 5);
     lrt_sample_t* d = buf->channels [chan];
-    for (int i = start; count >= 0; ++i) {
-        d[i] = d[i] * gain;
-        --count;
+    for (lua_Integer i = start; --count >= 0; ++i) {
+        d[i] = gain * d[i];
     }
     return 0;
 }
@@ -357,6 +444,15 @@ static int audiobuffer_tostring (lua_State* L) {
     return 1;
 }
 
+static int audiobuffer_apply (lua_State* L) {
+    AudioBuffer* buf = lua_touserdata (L, 1);
+    if (LUA_TFUNCTION == lua_type (L, 2)) {
+        // lua_pushvalue (L, 2);
+        // lua_call ()
+    }
+    return 0;
+}
+
 static const luaL_Reg audiobuffer_m[] = {
     { "__gc",       audiobuffer_gc },
     { "__tostring", audiobuffer_tostring },
@@ -369,6 +465,7 @@ static const luaL_Reg audiobuffer_m[] = {
     { "get",        audiobuffer_get },
     { "set",        audiobuffer_set },
     { "applygain",  audiobuffer_applygain },
+    { "apply",      audiobuffer_apply },
     { NULL, NULL }
 };
 
@@ -398,13 +495,22 @@ static int f_dbtogain (lua_State* L) {
     return 1;
 }
 
+static int f_clear (lua_State* L) {
+    Vector* vec = luaL_checkudata (L, 1, LRT_MT_VECTOR);
+    lrt_vector_clear (vec);
+    return 0;
+}
+
 static const luaL_Reg audio_f[] = {
     { "Buffer",     audiobuffer_new },
+    { "Vector",     vector_new },
     { "round",      f_round },
     { "db2gain",    f_dbtogain },
     { "dbtogain",   f_dbtogain },
     { "gain2db",    f_gain2db },
     { "gaintodb",   f_gain2db },
+
+    { "clear",      f_clear },
     { NULL, NULL }
 };
 
@@ -414,6 +520,9 @@ LRT_EXPORT int luaopen_audio (lua_State* L) {
     lua_pushvalue (L, -1);               /* duplicate the metatable */
     lua_setfield (L, -2, "__index");     /* mt.__index = mt */
     luaL_setfuncs (L, audiobuffer_m, 0);
+
+    luaL_newmetatable (L, LRT_MT_VECTOR);
+    luaL_setfuncs (L, vector_m, 0);
 
     luaL_newlib (L, audio_f);
     return 1;
