@@ -77,6 +77,32 @@ local function test_audiobuffer_allocated()
    expect (buf:cleared() == true)
 end
 
+local function test_audiobuffer_vector()
+   begin_test ("vector")
+   local samplerate = 44100
+   local nchans = 1
+   local nframes = samplerate * 10
+   local buf = audio.Buffer (nchans, nframes)
+   print (string.format ("  %s", tostring (buf)))
+   expect (buf:channels() == nchans)
+   expect (buf:length() == nframes)
+   local value = audio.round (math.random());
+
+   local vec = nil
+   for c = 1, nchans do
+      vec = buf:vector (c)
+      for f = 1, nframes do
+         vec[f] = value
+         expect (value == vec[f])
+      end
+   end
+
+   begin_test ("clearing")
+   expect (buf:cleared() == false)
+   buf:clear()
+   expect (buf:cleared() == true)
+end
+
 local function test_midibuffer_swap_table()
    begin_test ("swap")
    local buf1 = midi.Buffer (0)
@@ -236,8 +262,20 @@ local tests = {
       test = test_audiobuffer
    },
    {
-      name = "audio.Buffer: allocated",
+      name = "audio.Vector",
+      test = test_vector
+   },
+   {
+      name = "audio.Vector (clear)",
+      test = test_vector_clear
+   },
+   {
+      name = "audio.Buffer: get/set/clear",
       test = test_audiobuffer_allocated
+   },
+   {
+      name = "audio.Buffer: vector/clear",
+      test = test_audiobuffer_vector
    },
    {
       name = "midi.Buffer (swap)",
@@ -250,23 +288,14 @@ local tests = {
    {
       name = "midi.Pipe",
       test = test_midipipe
-   },
-   {
-      name = "audio.Vector",
-      test = test_vector
-   },
-   {
-      name = "audio.Vector (clear 1)",
-      test = test_vector_clear
-   },
-   {
-      name = "audio.Vector (clear 2)",
-      test = test_vector_clear
    }
 }
 
 local st = os.clock()
 local completed = 0
+local fails = 0
+
+print ("Running tests....")
 for i, t in ipairs (tests) do
    if (type(t.test) == 'function') then
       bar()
@@ -281,7 +310,8 @@ for i, t in ipairs (tests) do
 end
 
 bar()
-print (string.format ("Tests completed: %d", completed))
-print (string.format ("Tests skipped: %d", #tests - completed))
+print (string.format ("completed: %d", completed))
+print (string.format ("skipped:   %d", #tests - completed))
+print (string.format ("failed:    %d", fails))
 bar()
-print (string.format ("Total time: %.3f (s)", os.clock() - st))
+print (string.format ("Total time: %.3f (s)\n", os.clock() - st))

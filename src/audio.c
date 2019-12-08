@@ -100,7 +100,7 @@ static int vector_index (lua_State* L) {
     Vector* vec = lua_touserdata (L, 1);
     lua_Integer i = lua_tointeger (L, 2) - 1;
     if (i >= 0 && i < vec->size) {
-        lua_pushinteger (L, vec->values[i]);
+        lua_pushnumber (L, vec->values[i]);
     } else {
         lua_pushnil (L);
     }
@@ -218,7 +218,7 @@ static void lrt_audio_buffer_create_vectors (lua_State* L, lrt_audio_buffer_t* b
         Vector* vec = lrt_vector_new (L, buf->nframes);
         buf->vectors[c]  = vec;
         buf->channels[c] = vec->values;
-        buf->vecrefs[c]  = luaL_ref (0, LUA_REGISTRYINDEX);
+        buf->vecrefs[c]  = luaL_ref (L, LUA_REGISTRYINDEX);
     }
     buf->vectors[buf->nchannels] = NULL;
     buf->vecrefs[buf->nchannels] = LUA_REFNIL;
@@ -440,6 +440,17 @@ static int audiobuffer_get (lua_State* L) {
     return 1;
 }
 
+static int audiobuffer_vec (lua_State* L) {
+    AudioBuffer* buf = lua_touserdata (L, 1);
+    lua_Integer i = lua_tointeger (L, 2) - 1;
+    if (i >= 0 && i < buf->nchannels) {
+        lua_rawgeti (L, LUA_REGISTRYINDEX, buf->vecrefs[i]);
+    } else {
+        lua_pushnil (L);
+    }
+    return 1;
+}
+
 static int audiobuffer_set (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
     if (buf == NULL || lua_gettop (L) < 4)
@@ -515,6 +526,7 @@ static const luaL_Reg audiobuffer_m[] = {
     { "set",        audiobuffer_set },
     { "applygain",  audiobuffer_applygain },
     { "apply",      audiobuffer_apply },
+    { "vector",     audiobuffer_vec },
     { NULL, NULL }
 };
 
