@@ -60,6 +60,33 @@ typedef void*                               lrt_midi_buffer_iter_t;
 typedef struct lrt_midi_pipe_impl_t         lrt_midi_pipe_t;
 typedef struct lrt_vector_impl_t            lrt_vector_t;
 
+/** Creates a new vector leaving it on the stack */
+lrt_vector_t* lrt_vector_new (lua_State*, int);
+
+/** Returns the number of elements used by the vector */
+size_t lrt_vector_size (lrt_vector_t*);
+
+/** Returns the total number of elements allocated.
+    This is NOT the number of elements currently used.
+    see `lrt_vector_size`
+*/
+size_t lrt_vector_capacity (lrt_vector_t*);
+
+/** Clears the vector */
+void lrt_vector_clear (lrt_vector_t*);
+
+/** Returns a value from the vector */
+lrt_sample_t lrt_vector_get (lrt_vector_t*, int);
+
+/** Sets a values in the vector */
+void lrt_vector_set (lrt_vector_t*, int, lrt_sample_t);
+
+/** Resizes the vector.  Does not allocate memory if the new size
+    is less than the total capacity. see `lrt_vector_capacity`
+*/
+void lrt_vector_resize (lrt_vector_t*, int);
+
+//=============================================================================
 /** Adds a new audio buffer to the lua stack
     @param L                The lua state
     @param num_channels     Total audio channels
