@@ -169,7 +169,7 @@ int main() {
     
     test_audio (L);
     test_foreach (L);
-    test_api (L);
+    // test_api (L);
     
     close (L);
     L = NULL;

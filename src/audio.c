@@ -35,21 +35,22 @@ struct lrt_vector_impl_t {
 };
 
 struct lrt_audio_buffer_impl_t {
+    lua_State* L;
     int nframes;                            // sample count
     int nchannels;                          // channel count
-    size_t size;                            // size of allocated data. zero if referenced
-    char* data;                             // allocated data block
+    lrt_vector_t** vectors;
+    int* vecrefs;
+    size_t size;
+    char* data;
     lrt_sample_t** channels;                // channels actually used
     lrt_sample_t* prealloc [LRT_NPREALLOC]; // pre-allocated channel space
     bool cleared;                           // true if buffer has been cleared
-
-    lrt_vector_t**  vectors;
-    int*            vecrefs;
 };
 
 typedef struct lrt_vector_impl_t        Vector;
 typedef struct lrt_audio_buffer_impl_t  AudioBuffer;
 
+//=============================================================================
 static lrt_vector_t* lrt_vector_new (lua_State* L, int size) {
     Vector* vec = lua_newuserdata (L, sizeof(Vector));
     luaL_setmetatable (L, LRT_MT_VECTOR);
@@ -80,58 +81,6 @@ static void lrt_vector_clear (lrt_vector_t* vec) {
     }
 }
 
-static int vector_new (lua_State* L) {
-    lrt_vector_new (L, MAX (0, lua_tointeger (L, 1)));
-    return 1;
-}
-
-static int vector_gc (lua_State* L) {
-    lrt_vector_free_values (lua_touserdata (L, 1));
-    return 0;
-}
-
-static int vector_len (lua_State* L) {
-    Vector* vec = lua_touserdata (L, 1);
-    lua_pushinteger (L, vec->size);
-    return 1;
-}
-
-static int vector_index (lua_State* L) {
-    Vector* vec = lua_touserdata (L, 1);
-    lua_Integer i = lua_tointeger (L, 2) - 1;
-    if (i >= 0 && i < vec->size) {
-        lua_pushnumber (L, vec->values[i]);
-    } else {
-        lua_pushnil (L);
-    }
-    return 1;
-}
-
-static int vector_newindex (lua_State* L) {
-    Vector* vec = lua_touserdata (L, 1);
-    lua_Integer i = lua_tointeger (L, 2) - 1;
-    lua_Number  v = lua_tonumber (L, 3);
-    if (i >= 0 && i < vec->size) {
-        vec->values[i] = v;
-    }
-    return 0;
-}
-
-static int vector_tostring (lua_State* L) {
-    Vector* vec = lua_touserdata (L, 1);
-    lua_pushfstring (L, "Vector: size=%d", vec->size);
-    return 1;
-}
-
-static const luaL_Reg vector_m[] = {
-    { "__gc",       vector_gc },
-    { "__len",      vector_len },
-    { "__index",    vector_index },
-    { "__newindex", vector_newindex },
-    { "__tostring", vector_tostring },
-    { NULL, NULL}
-};
-
 //=============================================================================
 static void lrt_audio_buffer_init (AudioBuffer* buf) {
     buf->nframes = buf->nchannels = 0;
@@ -141,28 +90,6 @@ static void lrt_audio_buffer_init (AudioBuffer* buf) {
     buf->vectors = NULL;
     memset (buf->prealloc, 0, sizeof(lrt_sample_t*) * LRT_NPREALLOC);
     buf->channels = (lrt_sample_t**) buf->prealloc;
-    buf->cleared = false;
-}
-
-static void lrt_audio_buffer_alloc_data (AudioBuffer* buf) {
-    size_t list_size = (size_t)(buf->nchannels + 1) * sizeof(lrt_sample_t*);
-    size_t required_alignment = (size_t) alignof (lrt_sample_t);
-    size_t alignment_overflow = list_size % required_alignment;
-    if (alignment_overflow > 0)
-        list_size += alignment_overflow - required_alignment;
-
-    buf->size = (size_t)buf->nchannels * (size_t)buf->nframes * sizeof(lrt_sample_t) + list_size + LRT_NPREALLOC;
-    buf->data = malloc (buf->size);
-    buf->channels = (lrt_sample_t**) buf->data;
-
-    lrt_sample_t* chan = (lrt_sample_t*)(buf->data + list_size);
-    for (int i = 0; i < buf->nchannels; ++i) {
-        buf->channels[i] = chan;
-        chan += buf->nframes;
-    }
-
-    buf->channels[buf->nchannels] = NULL;
-
     buf->cleared = false;
 }
 
@@ -177,12 +104,14 @@ static void lrt_audio_buffer_alloc_channels (AudioBuffer* buf, lrt_sample_t* con
         buf->channels = (lrt_sample_t**)(buf->data);
     }
 
-    for (int i = 0; i < buf->nchannels; ++i) {
-        assert (data[i] != NULL);
-        buf->channels[i] = data[i] + offset;
+    if (data != NULL) {
+        for (int i = 0; i < buf->nchannels; ++i) {
+            assert (data[i] != NULL);
+            buf->channels[i] = data[i] + offset;
+        }
     }
 
-    buf->channels[buf->nchannels] = NULL;
+    buf->channels [buf->nchannels] = NULL;
     buf->cleared = false;
 }
 
@@ -206,20 +135,20 @@ static void lrt_audio_buffer_free_vectors (lua_State* L, lrt_audio_buffer_t* buf
 static void lrt_audio_buffer_free_data (AudioBuffer* buf);
 
 static void lrt_audio_buffer_create_vectors (lua_State* L, lrt_audio_buffer_t* buf) {
-    lrt_audio_buffer_free_data (buf);
     lrt_audio_buffer_free_vectors (L, buf);
-    
+    lrt_audio_buffer_free_data (buf);
+    lrt_audio_buffer_alloc_channels (buf, NULL, 0);
+
     buf->vectors = malloc (sizeof (lrt_vector_t*) * (buf->nchannels + 1));
     buf->vecrefs = malloc (sizeof (int) * (buf->nchannels + 1));
-    buf->channels = (lrt_sample_t**) buf->prealloc;
 
     int c;
     for (c = 0; c < buf->nchannels; ++c) {
-        Vector* vec = lrt_vector_new (L, buf->nframes);
-        buf->vectors[c]  = vec;
-        buf->channels[c] = vec->values;
+        buf->vectors[c]  = lrt_vector_new (L, buf->nframes);
+        buf->channels[c] = buf->vectors[c]->values;
         buf->vecrefs[c]  = luaL_ref (L, LUA_REGISTRYINDEX);
     }
+
     buf->vectors[buf->nchannels] = NULL;
     buf->vecrefs[buf->nchannels] = LUA_REFNIL;
 
@@ -234,12 +163,12 @@ lrt_audio_buffer_t* lrt_audio_buffer_new (lua_State* L,
 {
     AudioBuffer* buf = lua_newuserdata (L, sizeof (AudioBuffer));
     luaL_setmetatable (L, LRT_MT_AUDIO_BUFFER);
+    buf->L = L;
     lrt_audio_buffer_init (buf);
 
     if (nchans > 0 && nframes > 0) {
         buf->nchannels = nchans;
         buf->nframes   = nframes;
-        lrt_audio_buffer_alloc_data (buf);
         lrt_audio_buffer_create_vectors (L, buf);
     }
 
@@ -293,10 +222,10 @@ void lrt_audio_buffer_resize (lrt_audio_buffer_t* buf,
         return;
     }
 
-    lrt_audio_buffer_free_data (buf);
+    lrt_audio_buffer_free_vectors (buf->L, buf);
     buf->nchannels = nchannels;
     buf->nframes   = nframes;
-    lrt_audio_buffer_alloc_data (buf);
+    lrt_audio_buffer_create_vectors (buf->L, buf);
 }
 
 void lrt_audio_buffer_duplicate (lrt_audio_buffer_t*        buffer,
@@ -358,6 +287,59 @@ static void lrt_audio_buffer_clear_channel (AudioBuffer* buf, int channel) {
 }
 
 //=============================================================================
+static int vector_new (lua_State* L) {
+    lrt_vector_new (L, MAX (0, lua_tointeger (L, 1)));
+    return 1;
+}
+
+static int vector_gc (lua_State* L) {
+    lrt_vector_free_values (lua_touserdata (L, 1));
+    return 0;
+}
+
+static int vector_len (lua_State* L) {
+    Vector* vec = lua_touserdata (L, 1);
+    lua_pushinteger (L, vec->size);
+    return 1;
+}
+
+static int vector_index (lua_State* L) {
+    Vector* vec = lua_touserdata (L, 1);
+    lua_Integer i = lua_tointeger (L, 2) - 1;
+    if (i >= 0 && i < vec->size) {
+        lua_pushnumber (L, vec->values[i]);
+    } else {
+        lua_pushnil (L);
+    }
+    return 1;
+}
+
+static int vector_newindex (lua_State* L) {
+    Vector* vec = lua_touserdata (L, 1);
+    lua_Integer i = lua_tointeger (L, 2) - 1;
+    lua_Number  v = lua_tonumber (L, 3);
+    if (i >= 0 && i < vec->size) {
+        vec->values[i] = v;
+    }
+    return 0;
+}
+
+static int vector_tostring (lua_State* L) {
+    Vector* vec = lua_touserdata (L, 1);
+    lua_pushfstring (L, "Vector: size=%d", vec->size);
+    return 1;
+}
+
+static const luaL_Reg vector_m[] = {
+    { "__gc",       vector_gc },
+    { "__len",      vector_len },
+    { "__index",    vector_index },
+    { "__newindex", vector_newindex },
+    { "__tostring", vector_tostring },
+    { NULL, NULL }
+};
+
+//=============================================================================
 static int audiobuffer_new (lua_State* L) {
     int nchans = 0, nframes = 0;
     if (lua_gettop (L) >= 2 && lua_isinteger (L, 1) && lua_isinteger (L, 2)) {
@@ -371,6 +353,7 @@ static int audiobuffer_new (lua_State* L) {
 static int audiobuffer_gc (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
     lrt_audio_buffer_free_data (buf);
+    buf->L = NULL;
     return 0;
 }
 

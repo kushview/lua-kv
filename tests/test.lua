@@ -15,7 +15,7 @@
 local audio = require ("audio")
 local midi  = require ("midi")
 
-local function bar(size)
+local function bar (size)
    if type(size) ~= 'number' then size = 40 end
    size = math.tointeger (size)
    local out = ""
