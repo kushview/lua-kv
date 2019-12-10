@@ -14,6 +14,9 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 */
 
+/// Lua RT
+// @module lrt
+
 #include <assert.h>
 #include "luainc.h"
 #include "lrt/lrt.h"

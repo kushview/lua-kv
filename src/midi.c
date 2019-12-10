@@ -14,6 +14,9 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 */
 
+/// MIDI module.
+// @module midi
+
 #include <assert.h>
 #include <stdlib.h>
 #include <stdbool.h>

@@ -13,7 +13,8 @@ LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR 
 PERFORMANCE OF THIS SOFTWARE.
 */
-
+/// Audio module.
+// @module audio
 #include <assert.h>
 #include <math.h>
 #include <stdbool.h>
@@ -314,6 +315,12 @@ static void lrt_audio_buffer_clear_channel (AudioBuffer* buf, int channel) {
 }
 
 //=============================================================================
+
+/***
+An array of audio samples
+@type Vector
+*/
+
 static int vector_new (lua_State* L) {
     lrt_vector_new (L, MAX (0, lua_tointeger (L, 1)));
     return 1;
@@ -324,6 +331,9 @@ static int vector_gc (lua_State* L) {
     return 0;
 }
 
+/***
+@function __len
+*/
 static int vector_len (lua_State* L) {
     Vector* vec = lua_touserdata (L, 1);
     lua_pushinteger (L, vec->size);
@@ -384,6 +394,15 @@ static int audiobuffer_gc (lua_State* L) {
     return 0;
 }
 
+/***
+An audio buffer
+@type Buffer
+*/
+
+/**
+Clears the audio buffer
+@function clear
+*/
 static int audiobuffer_clear (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
     if (buf == NULL)
