@@ -15,7 +15,7 @@ PERFORMANCE OF THIS SOFTWARE.
 */
 
 /// MIDI module.
-// @module midi
+// @module lrt.midi
 
 #include <assert.h>
 #include <stdlib.h>
