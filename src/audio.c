@@ -498,6 +498,49 @@ static int audiobuffer_applygain (lua_State* L) {
     return 0;
 }
 
+static int audiobuffer_fade (lua_State* L) {
+    AudioBuffer* buf  = lua_touserdata (L, 1);
+    switch (lua_gettop (L)) {
+        case 3: {
+            // apply gain to all channels/frames
+            lua_Number gain1 = lua_tonumber (L, 2);
+            lua_Number gain2 = lua_tonumber (L, 3);
+            lua_Number inc = buf->nframes > 0 ? (gain2 - gain1) / (lua_Number)buf->nframes
+                                              : 0.0;
+            lua_Number gain;
+
+            for (lua_Integer c = 0; c < buf->nchannels; ++c) {
+                gain = gain1;
+                lrt_sample_t* d = buf->channels [c];
+                for (lua_Integer f = 0; f < buf->nframes; ++f) {
+                    d[f] = gain * d[f];
+                    gain += inc;
+                }
+            }
+            break;
+        }
+
+        case 6: {
+            // apply fade to specific channel with start and frame count
+            lua_Integer chan  = lua_tointeger (L, 2) - 1;
+            lua_Integer start = lua_tointeger (L, 3) - 1;
+            lua_Integer count = lua_tointeger (L, 4);
+            lua_Number gain1  = lua_tonumber (L, 5);
+            lua_Number gain2  = lua_tonumber (L, 6);
+            lrt_sample_t* d = buf->channels [chan];
+            lua_Number inc = count > 0 ? (gain2 - gain1) / (lua_Number) count
+                                       : 0.0;
+            for (lua_Integer i = start; --count >= 0; ++i) {
+                d[i] = gain1 * d[i];
+                gain1 += inc;
+            }
+            break; 
+        }
+    }
+
+    return 0;
+}
+
 static int audiobuffer_referto (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
     lrt_sample_t* const* data = lua_touserdata (L, 2);
@@ -537,6 +580,7 @@ static const luaL_Reg audiobuffer_m[] = {
     { "applygain",  audiobuffer_applygain },
     { "apply",      audiobuffer_apply },
     { "vector",     audiobuffer_vec },
+    { "fade",       audiobuffer_fade },
     { NULL, NULL }
 };
 
