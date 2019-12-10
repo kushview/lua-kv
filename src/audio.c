@@ -487,14 +487,41 @@ static int audiobuffer_raw (lua_State* L) {
 
 static int audiobuffer_applygain (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
-    lua_Integer chan  = lua_tointeger (L, 2) - 1;
-    lua_Integer start = lua_tointeger (L, 3) - 1;
-    lua_Integer count = lua_tointeger (L, 4);
-    lua_Number gain = lua_tonumber (L, 5);
-    lrt_sample_t* d = buf->channels [chan];
-    for (lua_Integer i = start; --count >= 0; ++i) {
-        d[i] = gain * d[i];
+    switch (lua_gettop (L)) {
+        case 2: {
+            lua_Number gain = lua_tonumber (L, 2);
+            for (lua_Integer c = 0; c < buf->nchannels; ++c) {
+                lrt_sample_t* d = buf->channels [c];
+                for (lua_Integer f = 0; f < buf->nframes; ++f) {
+                    d[f] = gain * d[f];
+                }
+            }
+            break;
+        }
+        case 3: {
+            lua_Integer chan = lua_tointeger (L, 2) - 1;
+            lua_Number gain  = lua_tonumber (L, 3);
+            if (chan >= 0 && chan < buf->nchannels) {
+                lrt_sample_t* d = buf->channels [chan];
+                for (lua_Integer f = 0; f < buf->nframes; ++f) {
+                    d[f] = gain * d[f];
+                }
+            }
+            break;
+        }
+        case 5: {
+            lua_Integer chan  = lua_tointeger (L, 2) - 1;
+            lua_Integer start = lua_tointeger (L, 3) - 1;
+            lua_Integer count = lua_tointeger (L, 4);
+            lua_Number gain = lua_tonumber (L, 5);
+            lrt_sample_t* d = buf->channels [chan];
+            for (lua_Integer f = start; --count >= 0; ++f) {
+                d[f] = gain * d[f];
+            }
+            break;
+        }
     }
+
     return 0;
 }
 
