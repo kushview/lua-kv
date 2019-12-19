@@ -1,0 +1,189 @@
+
+#include <stdlib.h>
+#include <string.h>
+#include "luainc.h"
+#include "vector.h"
+#include "util.h"
+#include "lrt/lrt.h"
+
+struct lrt_vector_impl_t {
+    lrt_sample_t*   values;
+    lua_Integer     size;
+    lua_Integer     used;
+};
+
+typedef struct lrt_vector_impl_t        Vector;
+
+//=============================================================================
+lrt_vector_t* lrt_vector_new (lua_State* L, int size) {
+    Vector* vec = lua_newuserdata (L, sizeof(Vector));
+    luaL_setmetatable (L, LRT_MT_VECTOR);
+
+    if (size > 0) {
+        vec->size = vec->used = size;
+        vec->values = malloc (sizeof(lrt_sample_t) * size);
+        memset (vec->values, 0, sizeof(lrt_sample_t) * size);
+    } else {
+        vec->size = vec->used   = 0;
+        vec->values = NULL;
+    }
+
+    return vec;
+}
+
+static void lrt_vector_free_values (lrt_vector_t* vec) {
+    if (vec->values != NULL) {
+        free (vec->values);
+        vec->values = NULL;
+    }
+    vec->size = vec->used = 0;
+}
+
+size_t lrt_vector_size (lrt_vector_t* vec) {
+    return (size_t) vec->used;
+}
+
+size_t lrt_vector_capacity (lrt_vector_t* vec) {
+    return (size_t) vec->size;
+}
+
+lrt_sample_t* lrt_vector_values (lrt_vector_t* vec) {
+    return vec->values;
+}
+
+lrt_sample_t lrt_vector_get (lrt_vector_t* vec, int index) {
+    return vec->values [index];
+}
+
+void lrt_vector_set (lrt_vector_t* vec, int index, lrt_sample_t value) {
+    vec->values [index] = value;
+}
+
+void lrt_vector_clear (lrt_vector_t* vec) {
+    if (vec->used > 0) {
+        memset (vec->values, 0, sizeof(lrt_sample_t) * vec->used);
+    }
+}
+
+void lrt_vector_resize (lrt_vector_t* vec, int size) {
+    size = MAX (0, size);
+    if (size <= vec->size) {
+        vec->used = size;
+    } else {
+        vec->used = vec->size = size;
+        vec->values = realloc (vec->values, sizeof(lrt_sample_t) * vec->size);
+    }
+}
+
+//=============================================================================
+/***
+An array of floating point values
+@type Vector
+@within lrt
+*/
+
+/***
+Creates a new vector
+@function Vector
+@within lrt
+*/
+
+
+static int vector_gc (lua_State* L) {
+    lrt_vector_free_values (lua_touserdata (L, 1));
+    return 0;
+}
+
+static int vector_len (lua_State* L) {
+    Vector* vec = lua_touserdata (L, 1);
+    lua_pushinteger (L, vec->size);
+    return 1;
+}
+
+static int vector_index (lua_State* L) {
+    Vector* vec = lua_touserdata (L, 1);
+    lua_Integer i = lua_tointeger (L, 2) - 1;
+    if (i >= 0 && i < vec->used) {
+        lua_pushnumber (L, vec->values[i]);
+    } else {
+        lua_pushnil (L);
+    }
+    return 1;
+}
+
+static int vector_newindex (lua_State* L) {
+    Vector* vec = lua_touserdata (L, 1);
+    lua_Integer i = lua_tointeger (L, 2) - 1;
+    lua_Number  v = lua_tonumber (L, 3);
+    if (i >= 0 && i < vec->used) {
+        vec->values[i] = v;
+    }
+    return 0;
+}
+
+static int vector_tostring (lua_State* L) {
+    Vector* vec = lua_touserdata (L, 1);
+    lua_pushfstring (L, "Vector: size=%d capacity=%d", vec->used, vec->size);
+    return 1;
+}
+
+static const luaL_Reg vector_m[] = {
+    { "__gc",       vector_gc },
+    { "__len",      vector_len },
+    { "__index",    vector_index },
+    { "__newindex", vector_newindex },
+    { "__tostring", vector_tostring },
+    { NULL, NULL }
+};
+
+//=============================================================================
+static int f_new (lua_State* L) {
+    if (NULL == lrt_vector_new (L, MAX (0, lua_tointeger (L, 1))))
+        lua_pushnil (L);
+    return 1;
+}
+
+static int f_clear (lua_State* L) {
+    lrt_vector_t* vec = luaL_checkudata (L, 1, LRT_MT_VECTOR);
+    
+    if (vec->used <= 0 || vec->values == NULL) {
+        return 0;
+    }
+
+    switch (lua_gettop (L)) {
+        default: {
+            memset (vec->values, 0, sizeof(lrt_sample_t) * vec->used);
+            break;
+        }
+    }
+    
+    return 0;
+}
+
+static int f_reserve (lua_State* L) {
+    return 0;
+}
+
+static int f_resize (lua_State* L) {
+    return 0;
+}
+
+static const luaL_Reg vector_f[] = {
+    { "new",        f_new },
+    { "clear",      f_clear },
+    { "reserve",    f_reserve },
+    { "resize",     f_resize },
+    { NULL, NULL }
+};
+
+void lrt_vector_metatable (lua_State* L) {
+    if (0 != luaL_newmetatable (L, LRT_MT_VECTOR)) {
+        luaL_setfuncs (L, vector_m, 0);
+    }
+}
+
+LRT_EXPORT int luaopen_dsp_vector (lua_State* L) {
+    lrt_vector_metatable (L);
+    luaL_newlib (L, vector_f);
+    return 1;
+}

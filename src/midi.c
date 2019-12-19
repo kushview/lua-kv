@@ -617,7 +617,7 @@ static const luaL_Reg midi_f[] = {
     { NULL, NULL }
 };
 
-LRT_EXPORT int luaopen_midi (lua_State* L) {
+LRT_EXPORT int luaopen_dsp_midi (lua_State* L) {
     luaL_newmetatable (L, LRT_MT_MIDI_BUFFER);
     lua_pushvalue (L, -1);               /* duplicate the metatable */
     lua_setfield (L, -2, "__index");     /* mt.__index = mt */

@@ -23,6 +23,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "../src/audio.c"
 #include "../src/midi.c"
 #include "../src/lrtlib.c"
+#include "../src/vector.c"
 
 static const int nchannels = 1;
 static const int nframes   = 512;

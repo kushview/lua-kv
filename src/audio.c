@@ -25,18 +25,13 @@ PERFORMANCE OF THIS SOFTWARE.
 #include <string.h>
 
 #include "luainc.h"
+#include "vector.h"
 #include "util.h"
 #include "lrt/lrt.h"
 
 #define LRT_MINUS_INFINITY_DB   -100.0
 #define LRT_UNITY_GAIN          1.0
 #define LRT_NPREALLOC           32
-
-struct lrt_vector_impl_t {
-    lrt_sample_t*   values;
-    lua_Integer     size;
-    lua_Integer     used;
-};
 
 struct lrt_audio_buffer_impl_t {
     lua_State* L;
@@ -51,65 +46,7 @@ struct lrt_audio_buffer_impl_t {
     bool cleared;                           // true if buffer has been cleared
 };
 
-typedef struct lrt_vector_impl_t        Vector;
 typedef struct lrt_audio_buffer_impl_t  AudioBuffer;
-
-//=============================================================================
-lrt_vector_t* lrt_vector_new (lua_State* L, int size) {
-    Vector* vec = lua_newuserdata (L, sizeof(Vector));
-    luaL_setmetatable (L, LRT_MT_VECTOR);
-
-    if (size > 0) {
-        vec->size = vec->used = size;
-        vec->values = malloc (sizeof(lrt_sample_t) * size);
-        memset (vec->values, 0, sizeof(lrt_sample_t) * size);
-    } else {
-        vec->size = vec->used   = 0;
-        vec->values = NULL;
-    }
-
-    return vec;
-}
-
-static void lrt_vector_free_values (lrt_vector_t* vec) {
-    if (vec->values != NULL) {
-        free (vec->values);
-        vec->values = NULL;
-    }
-    vec->size = vec->used = 0;
-}
-
-size_t lrt_vector_size (lrt_vector_t* vec) {
-    return (size_t) vec->used;
-}
-
-size_t lrt_vector_capacity (lrt_vector_t* vec) {
-    return (size_t) vec->size;
-}
-
-lrt_sample_t lrt_vector_get (lrt_vector_t* vec, int index) {
-    return vec->values [index];
-}
-
-void lrt_vector_set (lrt_vector_t* vec, int index, lrt_sample_t value) {
-    vec->values [index] = value;
-}
-
-void lrt_vector_clear (lrt_vector_t* vec) {
-    if (vec->used > 0) {
-        memset (vec->values, 0, sizeof(lrt_sample_t) * vec->used);
-    }
-}
-
-void lrt_vector_resize (lrt_vector_t* vec, int size) {
-    size = MAX (0, size);
-    if (size <= vec->size) {
-        vec->used = size;
-    } else {
-        vec->used = vec->size = size;
-        vec->values = realloc (vec->values, sizeof(lrt_sample_t) * vec->size);
-    }
-}
 
 //=============================================================================
 static void lrt_audio_buffer_init (AudioBuffer* buf) {
@@ -175,7 +112,7 @@ static void lrt_audio_buffer_create_vectors (lua_State* L, lrt_audio_buffer_t* b
     int c;
     for (c = 0; c < buf->nchannels; ++c) {
         buf->vectors[c]  = lrt_vector_new (L, buf->nframes);
-        buf->channels[c] = buf->vectors[c]->values;
+        buf->channels[c] = lrt_vector_values (buf->vectors [c]);
         buf->vecrefs[c]  = luaL_ref (L, LUA_REGISTRYINDEX);
     }
 
@@ -315,71 +252,6 @@ static void lrt_audio_buffer_clear_channel (AudioBuffer* buf, int channel) {
     if (channel == 0 && buf->nchannels == 1)
         buf->cleared = true;
 }
-
-//=============================================================================
-
-/***
-An array of floating point values
-@type Vector
-@within lrt
-*/
-
-/***
-Creates a new vector
-@function Vector
-@within lrt
-*/
-static int vector_new (lua_State* L) {
-    lrt_vector_new (L, MAX (0, lua_tointeger (L, 1)));
-    return 1;
-}
-
-static int vector_gc (lua_State* L) {
-    lrt_vector_free_values (lua_touserdata (L, 1));
-    return 0;
-}
-
-static int vector_len (lua_State* L) {
-    Vector* vec = lua_touserdata (L, 1);
-    lua_pushinteger (L, vec->size);
-    return 1;
-}
-
-static int vector_index (lua_State* L) {
-    Vector* vec = lua_touserdata (L, 1);
-    lua_Integer i = lua_tointeger (L, 2) - 1;
-    if (i >= 0 && i < vec->used) {
-        lua_pushnumber (L, vec->values[i]);
-    } else {
-        lua_pushnil (L);
-    }
-    return 1;
-}
-
-static int vector_newindex (lua_State* L) {
-    Vector* vec = lua_touserdata (L, 1);
-    lua_Integer i = lua_tointeger (L, 2) - 1;
-    lua_Number  v = lua_tonumber (L, 3);
-    if (i >= 0 && i < vec->used) {
-        vec->values[i] = v;
-    }
-    return 0;
-}
-
-static int vector_tostring (lua_State* L) {
-    Vector* vec = lua_touserdata (L, 1);
-    lua_pushfstring (L, "Vector: size=%d capacity=%d", vec->used, vec->size);
-    return 1;
-}
-
-static const luaL_Reg vector_m[] = {
-    { "__gc",       vector_gc },
-    { "__len",      vector_len },
-    { "__index",    vector_index },
-    { "__newindex", vector_newindex },
-    { "__tostring", vector_tostring },
-    { NULL, NULL }
-};
 
 //=============================================================================
 
@@ -666,34 +538,25 @@ static int f_dbtogain (lua_State* L) {
     return 1;
 }
 
-static int f_clear (lua_State* L) {
-    Vector* vec = luaL_checkudata (L, 1, LRT_MT_VECTOR);
-    lrt_vector_clear (vec);
-    return 0;
-}
-
 static const luaL_Reg audio_f[] = {
     { "Buffer",     audiobuffer_new },
-    { "Vector",     vector_new },
     { "round",      f_round },
     { "db2gain",    f_dbtogain },
     { "dbtogain",   f_dbtogain },
     { "gain2db",    f_gain2db },
     { "gaintodb",   f_gain2db },
-
-    { "clear",      f_clear },
     { NULL, NULL }
 };
 
 //=============================================================================
-LRT_EXPORT int luaopen_audio (lua_State* L) {
+
+LRT_EXPORT int luaopen_dsp_audio (lua_State* L) {
     luaL_newmetatable (L, LRT_MT_AUDIO_BUFFER);
     lua_pushvalue (L, -1);               /* duplicate the metatable */
     lua_setfield (L, -2, "__index");     /* mt.__index = mt */
     luaL_setfuncs (L, audiobuffer_m, 0);
 
-    luaL_newmetatable (L, LRT_MT_VECTOR);
-    luaL_setfuncs (L, vector_m, 0);
+    lrt_vector_metatable (L);
 
     luaL_newlib (L, audio_f);
     return 1;

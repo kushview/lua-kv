@@ -58,8 +58,13 @@ def build_module (bld, name, source):
     return mod
 
 def build (bld):
-    build_module (bld, 'audio',    [ 'src/audio.c' ])
-    build_module (bld, 'midi',     [ 'src/midi.c' ])
+    build_module (bld, 'dsp', '''
+        src/audio.c
+        src/midi.c
+        src/vector.c
+        src/lrtmod.c'''
+    .split())
+    
     bld.program (
         source      = [ 'tests/test.c' ],
         includes    = [ '.', 'src' ],

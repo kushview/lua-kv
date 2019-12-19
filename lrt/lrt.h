@@ -75,6 +75,9 @@ size_t lrt_vector_capacity (lrt_vector_t*);
 /** Clears the vector */
 void lrt_vector_clear (lrt_vector_t*);
 
+/** Returns a pointer to value array */
+lrt_sample_t* lrt_vector_values (lrt_vector_t*);
+
 /** Returns a value from the vector */
 lrt_sample_t lrt_vector_get (lrt_vector_t*, int);
 

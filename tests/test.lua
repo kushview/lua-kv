@@ -12,8 +12,13 @@
 -- OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 -- PERFORMANCE OF THIS SOFTWARE.
 
-local audio = require ("audio")
-local midi  = require ("midi")
+local dsp    = require ('dsp')
+local vector = require ('dsp.vector')
+local audio  = require ('dsp.audio')
+local midi   = require ('dsp.midi')
+
+local st = os.clock()
+local completed, fails, checks = 0, 0, 0
 
 local function bar (size)
    if type(size) ~= 'number' then size = 40 end
@@ -24,7 +29,12 @@ local function bar (size)
 end
 
 local function expect (result, msg)
-   assert (result, msg or "failed!")
+   if not result then
+      fails = fails + 1
+      print (msg or "failed!")
+   else
+      checks = checks + 1
+   end
 end
 
 local function begin_test (name)
@@ -33,8 +43,8 @@ local function begin_test (name)
 end
 
 local function test_db()
-   expect (audio.db2gain (0.0) == 1.0)
-   expect (audio.gain2db (1.0) == 0.0)
+   expect (dsp.dbtogain (0.0) == 1.0)
+   expect (dsp.gaintodb (1.0) == 0.0)
 end
 
 local function test_audiobuffer()
@@ -229,8 +239,8 @@ end
 
 local vecsize = 44100 * 10
 local function test_vector()
-   local vec = audio.Vector (vecsize)
-   vec = nil; collectgarbage(); vec = audio.Vector (vecsize)
+   local vec = vector.new (vecsize)
+   vec = nil; collectgarbage(); vec = vector.new (vecsize)
    begin_test (tostring (vec))
 
    expect (#vec == vecsize, string.format ("%d != %d", #vec, vecsize))
@@ -241,15 +251,18 @@ local function test_vector()
    for _, val in ipairs (vec) do
       expect (val == 100.0, string.format ("%f != %f", val, 100.0))
    end
-   audio.clear (vec)
-   for i, val in ipairs (vec) do
+   vector.clear (vec)
+   for _, val in ipairs (vec) do
       expect (val == 0.0, string.format ("%f != %f", val, 0.0))
    end
 end
 
 local function test_vector_clear()
-   local vec = audio.Vector (vecsize)
-   for _ = 1, 1 do audio.clear (vec) end
+   local vec = vector.new (vecsize)
+   for i = 1, vecsize do vec[i] = 100.0 end
+   for i = 1, vecsize do expect (vec[i] == 100.0) end
+   for _ = 1, 1 do vector.clear (vec) end
+   for i = 1, vecsize do expect (vec[i] == 0.0) end
 end
 
 local tests = {
@@ -291,10 +304,6 @@ local tests = {
    }
 }
 
-local st = os.clock()
-local completed = 0
-local fails = 0
-
 print ("Running tests....")
 for i, t in ipairs (tests) do
    if (type(t.test) == 'function') then
@@ -310,8 +319,9 @@ for i, t in ipairs (tests) do
 end
 
 bar()
-print (string.format ("completed: %d", completed))
+print (string.format ("cases:     %d", completed))
 print (string.format ("skipped:   %d", #tests - completed))
+print (string.format ("passed:    %d", checks))
 print (string.format ("failed:    %d", fails))
 bar()
 print (string.format ("Total time: %.3f (s)\n", os.clock() - st))
