@@ -21,12 +21,16 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "luainc.h"
 #include "lrt/lrt.h"
 
+extern int luaopen_dsp (lua_State*);
 extern int luaopen_dsp_audio (lua_State*);
 extern int luaopen_dsp_midi (lua_State*);
+extern int luaopen_dsp_vector (lua_State*);
 
 static const luaL_Reg lrtmods[] = {
-    { "audio", luaopen_dsp_audio },
-    { "midi",  luaopen_dsp_midi },
+    { "dsp",        luaopen_dsp },
+    { "dsp.audio",  luaopen_dsp_audio },
+    { "dsp.midi",   luaopen_dsp_midi },
+    { "dsp.vector", luaopen_dsp_vector },
     { NULL, NULL }
 };
 
