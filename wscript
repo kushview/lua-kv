@@ -58,11 +58,11 @@ def build_module (bld, name, source):
     return mod
 
 def build (bld):
-    build_module (bld, 'dsp', '''
+    build_module (bld, 'kv', '''
         src/audio.c
         src/midi.c
         src/vector.c
-        src/lrtmod.c'''
+        src/kvmod.c'''
     .split())
     
     bld.program (

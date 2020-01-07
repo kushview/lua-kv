@@ -12,10 +12,10 @@
 -- OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 -- PERFORMANCE OF THIS SOFTWARE.
 
-local dsp    = require ('dsp')
-local vector = require ('dsp.vector')
-local audio  = require ('dsp.audio')
-local midi   = require ('dsp.midi')
+local kv     = require ('kv')
+local vector = require ('kv.vector')
+local audio  = require ('kv.audio')
+local midi   = require ('kv.midi')
 
 local st = os.clock()
 local completed, fails, checks = 0, 0, 0
@@ -43,8 +43,8 @@ local function begin_test (name)
 end
 
 local function test_db()
-   expect (dsp.dbtogain (0.0) == 1.0)
-   expect (dsp.gaintodb (1.0) == 0.0)
+   expect (audio.dbtogain (0.0) == 1.0)
+   expect (audio.gaintodb (1.0) == 0.0)
 end
 
 local function test_audiobuffer()

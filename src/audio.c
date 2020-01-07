@@ -27,48 +27,48 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "luainc.h"
 #include "vector.h"
 #include "util.h"
-#include "lrt/lrt.h"
+#include "lua-kv.h"
 
-#define LRT_MINUS_INFINITY_DB   -100.0
-#define LRT_UNITY_GAIN          1.0
-#define LRT_NPREALLOC           32
+#define LKV_MINUS_INFINITY_DB   -100.0
+#define LKV_UNITY_GAIN          1.0
+#define LKV_NPREALLOC           32
 
-struct lrt_audio_buffer_impl_t {
+struct kv_audio_buffer_impl_t {
     lua_State* L;
     int nframes;                            // sample count
     int nchannels;                          // channel count
-    lrt_vector_t** vectors;
+    kv_vector_t** vectors;
     int* vecrefs;
     size_t size;
     char* data;
-    lrt_sample_t** channels;                // channels actually used
-    lrt_sample_t* prealloc [LRT_NPREALLOC]; // pre-allocated channel space
+    kv_sample_t** channels;                // channels actually used
+    kv_sample_t* prealloc [LKV_NPREALLOC]; // pre-allocated channel space
     bool cleared;                           // true if buffer has been cleared
 };
 
-typedef struct lrt_audio_buffer_impl_t  AudioBuffer;
+typedef struct kv_audio_buffer_impl_t  AudioBuffer;
 
 //=============================================================================
-static void lrt_audio_buffer_init (AudioBuffer* buf) {
+static void kv_audio_buffer_init (AudioBuffer* buf) {
     buf->nframes = buf->nchannels = 0;
     buf->size = 0;
     buf->data = NULL;
     buf->vecrefs = NULL;
     buf->vectors = NULL;
-    memset (buf->prealloc, 0, sizeof(lrt_sample_t*) * LRT_NPREALLOC);
-    buf->channels = (lrt_sample_t**) buf->prealloc;
+    memset (buf->prealloc, 0, sizeof(kv_sample_t*) * LKV_NPREALLOC);
+    buf->channels = (kv_sample_t**) buf->prealloc;
     buf->cleared = false;
 }
 
-static void lrt_audio_buffer_alloc_channels (AudioBuffer* buf, lrt_sample_t* const* data, int offset) {
+static void kv_audio_buffer_alloc_channels (AudioBuffer* buf, kv_sample_t* const* data, int offset) {
     assert (offset >= 0);
     
-    if (buf->nchannels < LRT_NPREALLOC) {
-        buf->channels = (lrt_sample_t**) buf->prealloc;
+    if (buf->nchannels < LKV_NPREALLOC) {
+        buf->channels = (kv_sample_t**) buf->prealloc;
     } else {
-        buf->size = (size_t)(buf->nchannels + 1) * sizeof (lrt_sample_t*);
+        buf->size = (size_t)(buf->nchannels + 1) * sizeof (kv_sample_t*);
         buf->data = malloc (buf->size);
-        buf->channels = (lrt_sample_t**)(buf->data);
+        buf->channels = (kv_sample_t**)(buf->data);
     }
 
     if (data != NULL) {
@@ -82,7 +82,7 @@ static void lrt_audio_buffer_alloc_channels (AudioBuffer* buf, lrt_sample_t* con
     buf->cleared = false;
 }
 
-static void lrt_audio_buffer_free_vectors (lua_State* L, lrt_audio_buffer_t* buf) {
+static void kv_audio_buffer_free_vectors (lua_State* L, kv_audio_buffer_t* buf) {
     if (buf->vectors == NULL || buf->vecrefs == NULL) {
         return;
     }
@@ -99,50 +99,50 @@ static void lrt_audio_buffer_free_vectors (lua_State* L, lrt_audio_buffer_t* buf
     buf->vecrefs = NULL;
 }
 
-static void lrt_audio_buffer_free_data (AudioBuffer* buf);
+static void kv_audio_buffer_free_data (AudioBuffer* buf);
 
-static void lrt_audio_buffer_create_vectors (lua_State* L, lrt_audio_buffer_t* buf) {
-    lrt_audio_buffer_free_vectors (L, buf);
-    lrt_audio_buffer_free_data (buf);
-    lrt_audio_buffer_alloc_channels (buf, NULL, 0);
+static void kv_audio_buffer_create_vectors (lua_State* L, kv_audio_buffer_t* buf) {
+    kv_audio_buffer_free_vectors (L, buf);
+    kv_audio_buffer_free_data (buf);
+    kv_audio_buffer_alloc_channels (buf, NULL, 0);
 
-    buf->vectors = malloc (sizeof (lrt_vector_t*) * (buf->nchannels + 1));
+    buf->vectors = malloc (sizeof (kv_vector_t*) * (buf->nchannels + 1));
     buf->vecrefs = malloc (sizeof (int) * (buf->nchannels + 1));
 
     int c;
     for (c = 0; c < buf->nchannels; ++c) {
-        buf->vectors[c]  = lrt_vector_new (L, buf->nframes);
-        buf->channels[c] = lrt_vector_values (buf->vectors [c]);
+        buf->vectors[c]  = kv_vector_new (L, buf->nframes);
+        buf->channels[c] = kv_vector_values (buf->vectors [c]);
         buf->vecrefs[c]  = luaL_ref (L, LUA_REGISTRYINDEX);
     }
 
     buf->vectors[buf->nchannels] = NULL;
     buf->vecrefs[buf->nchannels] = LUA_REFNIL;
 
-    for (c = buf->nchannels; c < LRT_NPREALLOC; ++c) {
+    for (c = buf->nchannels; c < LKV_NPREALLOC; ++c) {
         buf->prealloc[c] = NULL;
     }
 }
 
-lrt_audio_buffer_t* lrt_audio_buffer_new (lua_State* L,
+kv_audio_buffer_t* kv_audio_buffer_new (lua_State* L,
                                           int        nchans, 
                                           int        nframes)
 {
     AudioBuffer* buf = lua_newuserdata (L, sizeof (AudioBuffer));
-    luaL_setmetatable (L, LRT_MT_AUDIO_BUFFER);
+    luaL_setmetatable (L, LKV_MT_AUDIO_BUFFER);
     buf->L = L;
-    lrt_audio_buffer_init (buf);
+    kv_audio_buffer_init (buf);
 
     if (nchans > 0 && nframes > 0) {
         buf->nchannels = nchans;
         buf->nframes   = nframes;
-        lrt_audio_buffer_create_vectors (L, buf);
+        kv_audio_buffer_create_vectors (L, buf);
     }
 
     return buf;
 }
 
-static void lrt_audio_buffer_free_data (AudioBuffer* buf) {
+static void kv_audio_buffer_free_data (AudioBuffer* buf) {
     if (buf->size != 0 && buf->data != NULL) {
         free (buf->data);
         buf->size = 0;
@@ -150,35 +150,35 @@ static void lrt_audio_buffer_free_data (AudioBuffer* buf) {
     }
 }
 
-int lrt_audio_buffer_channels (lrt_audio_buffer_t* buf) {
+int kv_audio_buffer_channels (kv_audio_buffer_t* buf) {
     return buf->nchannels;
 }
 
-int lrt_audio_buffer_length (lrt_audio_buffer_t* buf) {
+int kv_audio_buffer_length (kv_audio_buffer_t* buf) {
     return buf->nframes;
 }
 
-void lrt_audio_buffer_refer_to (lrt_audio_buffer_t*  buf, 
-                                lrt_sample_t* const* data, 
+void kv_audio_buffer_refer_to (kv_audio_buffer_t*  buf, 
+                                kv_sample_t* const* data, 
                                 int                  nchannels, 
                                 int                  nframes) 
 {
     if (buf->size != 0)
-        lrt_audio_buffer_free_data (buf);
+        kv_audio_buffer_free_data (buf);
     buf->nchannels = nchannels;
     buf->nframes   = nframes;
-    lrt_audio_buffer_alloc_channels (buf, data, 0);
+    kv_audio_buffer_alloc_channels (buf, data, 0);
 }
 
-lrt_sample_t** lrt_audio_buffer_array (lrt_audio_buffer_t* buf) {
+kv_sample_t** kv_audio_buffer_array (kv_audio_buffer_t* buf) {
     return buf->channels;
 }
 
-lrt_sample_t* lrt_audio_buffer_channel (lrt_audio_buffer_t* buf, int channel) {
+kv_sample_t* kv_audio_buffer_channel (kv_audio_buffer_t* buf, int channel) {
     return buf->channels [channel];
 }
 
-void lrt_audio_buffer_resize (lrt_audio_buffer_t* buf,
+void kv_audio_buffer_resize (kv_audio_buffer_t* buf,
                               int                 nchannels, 
                               int                 nframes,
                               bool                preserve, 
@@ -189,66 +189,66 @@ void lrt_audio_buffer_resize (lrt_audio_buffer_t* buf,
         return;
     }
 
-    lrt_audio_buffer_free_vectors (buf->L, buf);
+    kv_audio_buffer_free_vectors (buf->L, buf);
     buf->nchannels = nchannels;
     buf->nframes   = nframes;
-    lrt_audio_buffer_create_vectors (buf->L, buf);
+    kv_audio_buffer_create_vectors (buf->L, buf);
 }
 
-void lrt_audio_buffer_duplicate (lrt_audio_buffer_t*        buffer,
-                                 const lrt_sample_t* const* source,
+void kv_audio_buffer_duplicate (kv_audio_buffer_t*        buffer,
+                                 const kv_sample_t* const* source,
                                  int                        nchannels,
                                  int                        nframes)
 {
-    lrt_audio_buffer_resize (buffer, nchannels, nframes, false, false, true);
+    kv_audio_buffer_resize (buffer, nchannels, nframes, false, false, true);
 
     for (int c = 0; c < nchannels; ++c) {
-        memcpy (buffer->channels[c], source[c], sizeof(lrt_sample_t) * nframes);
+        memcpy (buffer->channels[c], source[c], sizeof(kv_sample_t) * nframes);
     }
 }
 
-void lrt_audio_buffer_duplicate_32 (lrt_audio_buffer_t* buffer,
+void kv_audio_buffer_duplicate_32 (kv_audio_buffer_t* buffer,
                                     const float* const* source,
                                     int                 nchannels,
                                     int                 nframes)
 {
-    lrt_audio_buffer_resize (buffer, nchannels, nframes, false, false, true);
+    kv_audio_buffer_resize (buffer, nchannels, nframes, false, false, true);
 
     for (int c = 0; c < nchannels; ++c) {
         const float*  src = source [c];
-        lrt_sample_t* dst = buffer->channels [c];
+        kv_sample_t* dst = buffer->channels [c];
         for (int f = 0; f < nframes; ++f) {
-            dst[f] = (lrt_sample_t) src[f];
+            dst[f] = (kv_sample_t) src[f];
         }
     }
 }
 
 //=============================================================================
-static void lrt_audio_buffer_clear_all (AudioBuffer* buf) {
+static void kv_audio_buffer_clear_all (AudioBuffer* buf) {
     if (buf->cleared)
         return;
     for (int c = 0; c < buf->nchannels; ++c)
-        memset (buf->channels[c], 0, sizeof(lrt_sample_t) * (size_t)buf->nframes);
+        memset (buf->channels[c], 0, sizeof(kv_sample_t) * (size_t)buf->nframes);
     buf->cleared = true;
 }
 
-static void lrt_audio_buffer_clear_range (AudioBuffer* buf, int start, int count) {
+static void kv_audio_buffer_clear_range (AudioBuffer* buf, int start, int count) {
     if (buf->cleared)
         return;
     if (start == 0 && count == buf->nframes)
         buf->cleared = true;
     for (int c = 0; c < buf->nchannels; ++c)
-        memset (buf->channels[c] + start, 0, sizeof(lrt_sample_t) * (size_t)buf->nframes);
+        memset (buf->channels[c] + start, 0, sizeof(kv_sample_t) * (size_t)buf->nframes);
 }
 
-static void lrt_audio_buffer_clear_channel_range (AudioBuffer* buf, int channel, int start, int count) {
+static void kv_audio_buffer_clear_channel_range (AudioBuffer* buf, int channel, int start, int count) {
     if (buf->cleared)
         return;
-    memset (buf->channels[channel] + start, 0, sizeof(lrt_sample_t) * count);
+    memset (buf->channels[channel] + start, 0, sizeof(kv_sample_t) * count);
 }
 
-static void lrt_audio_buffer_clear_channel (AudioBuffer* buf, int channel) {
-    lrt_audio_buffer_clear_channel_range (buf, channel, 0, buf->nframes);
+static void kv_audio_buffer_clear_channel (AudioBuffer* buf, int channel) {
+    kv_audio_buffer_clear_channel_range (buf, channel, 0, buf->nframes);
     if (channel == 0 && buf->nchannels == 1)
         buf->cleared = true;
 }
@@ -270,13 +270,13 @@ static int audiobuffer_new (lua_State* L) {
         nchans  = (int) MAX (0, lua_tointeger (L, 1));
         nframes = (int) MAX (0, lua_tointeger (L, 2));
     }
-    lrt_audio_buffer_new (L, nchans, nframes);
+    kv_audio_buffer_new (L, nchans, nframes);
     return 1;
 }
 
 static int audiobuffer_gc (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
-    lrt_audio_buffer_free_data (buf);
+    kv_audio_buffer_free_data (buf);
     buf->L = NULL;
     return 0;
 }
@@ -292,21 +292,21 @@ static int audiobuffer_clear (lua_State* L) {
 
     switch (lua_gettop (L)) {
         case 0: break;
-        case 1: lrt_audio_buffer_clear_all (buf); break;
+        case 1: kv_audio_buffer_clear_all (buf); break;
         
         case 2: {
-            lrt_audio_buffer_clear_channel (buf, lua_tointeger (L, 2));
+            kv_audio_buffer_clear_channel (buf, lua_tointeger (L, 2));
         } break;
         
         case 3: {
-            lrt_audio_buffer_clear_range (buf,
+            kv_audio_buffer_clear_range (buf,
                 lua_tointeger (L, 2), 
                 lua_tointeger (L, 3));
         } break;
         
         default:
         case 4: {
-            lrt_audio_buffer_clear_channel_range (buf,
+            kv_audio_buffer_clear_channel_range (buf,
                 lua_tointeger (L, 2),
                 lua_tointeger (L, 3),
                 lua_tointeger (L, 4));
@@ -369,7 +369,7 @@ static int audiobuffer_set (lua_State* L) {
 
     lua_Integer channel = lua_tointeger (L, 2) - 1;
     lua_Integer frame   = lua_tointeger (L, 3) - 1;
-    *(buf->channels[channel] + frame) = (lrt_sample_t) lua_tonumber (L, 4);
+    *(buf->channels[channel] + frame) = (kv_sample_t) lua_tonumber (L, 4);
     buf->cleared = false;
     return 0;
 }
@@ -392,7 +392,7 @@ static int audiobuffer_applygain (lua_State* L) {
         case 2: {
             lua_Number gain = lua_tonumber (L, 2);
             for (lua_Integer c = 0; c < buf->nchannels; ++c) {
-                lrt_sample_t* d = buf->channels [c];
+                kv_sample_t* d = buf->channels [c];
                 for (lua_Integer f = 0; f < buf->nframes; ++f) {
                     d[f] = gain * d[f];
                 }
@@ -403,7 +403,7 @@ static int audiobuffer_applygain (lua_State* L) {
             lua_Integer chan = lua_tointeger (L, 2) - 1;
             lua_Number gain  = lua_tonumber (L, 3);
             if (chan >= 0 && chan < buf->nchannels) {
-                lrt_sample_t* d = buf->channels [chan];
+                kv_sample_t* d = buf->channels [chan];
                 for (lua_Integer f = 0; f < buf->nframes; ++f) {
                     d[f] = gain * d[f];
                 }
@@ -415,7 +415,7 @@ static int audiobuffer_applygain (lua_State* L) {
             lua_Integer start = lua_tointeger (L, 3) - 1;
             lua_Integer count = lua_tointeger (L, 4);
             lua_Number gain = lua_tonumber (L, 5);
-            lrt_sample_t* d = buf->channels [chan];
+            kv_sample_t* d = buf->channels [chan];
             for (lua_Integer f = start; --count >= 0; ++f) {
                 d[f] = gain * d[f];
             }
@@ -439,7 +439,7 @@ static int audiobuffer_fade (lua_State* L) {
 
             for (lua_Integer c = 0; c < buf->nchannels; ++c) {
                 gain = gain1;
-                lrt_sample_t* d = buf->channels [c];
+                kv_sample_t* d = buf->channels [c];
                 for (lua_Integer f = 0; f < buf->nframes; ++f) {
                     d[f] = gain * d[f];
                     gain += inc;
@@ -455,7 +455,7 @@ static int audiobuffer_fade (lua_State* L) {
             lua_Integer count = lua_tointeger (L, 4);
             lua_Number gain1  = lua_tonumber (L, 5);
             lua_Number gain2  = lua_tonumber (L, 6);
-            lrt_sample_t* d = buf->channels [chan];
+            kv_sample_t* d = buf->channels [chan];
             lua_Number inc = count > 0 ? (gain2 - gain1) / (lua_Number) count
                                        : 0.0;
             for (lua_Integer i = start; --count >= 0; ++i) {
@@ -471,10 +471,10 @@ static int audiobuffer_fade (lua_State* L) {
 
 static int audiobuffer_referto (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
-    lrt_sample_t* const* data = lua_touserdata (L, 2);
+    kv_sample_t* const* data = lua_touserdata (L, 2);
     lua_Integer nchannels  = MAX (0, lua_tointeger (L, 3));
     lua_Integer nframes    = MAX (0, lua_tointeger (L, 4));
-    lrt_audio_buffer_refer_to (buf, data, nchannels, nframes);
+    kv_audio_buffer_refer_to (buf, data, nchannels, nframes);
     return 0;
 }
 
@@ -514,16 +514,16 @@ static const luaL_Reg audiobuffer_m[] = {
 
 //=============================================================================
 static int f_round (lua_State* L) {
-    lua_pushnumber (L, (lua_Number)(lrt_sample_t) lua_tonumber (L, 1));
+    lua_pushnumber (L, (lua_Number)(kv_sample_t) lua_tonumber (L, 1));
     return 1;
 }
 
 static int f_gain2db (lua_State* L) {
     int isnum = 0;
     lua_Number gain = lua_tonumberx (L, 1, &isnum);
-    if (isnum == 0) gain = LRT_UNITY_GAIN;
+    if (isnum == 0) gain = LKV_UNITY_GAIN;
     lua_Number infinity = lua_tonumberx (L, 2, &isnum);
-    if (isnum == 0) infinity = LRT_MINUS_INFINITY_DB;
+    if (isnum == 0) infinity = LKV_MINUS_INFINITY_DB;
     lua_pushnumber (L, gain > 0.0 ? fmax (infinity, log10 (gain) * 20.0) : infinity);
     return 1;
 }
@@ -533,7 +533,7 @@ static int f_dbtogain (lua_State* L) {
     lua_Number db = lua_tonumberx (L, 1, &isnum);
     if (isnum == 0) db = 1.0;
     lua_Number infinity = lua_tonumberx (L, 2, &isnum);
-    if (isnum == 0) infinity = LRT_MINUS_INFINITY_DB;
+    if (isnum == 0) infinity = LKV_MINUS_INFINITY_DB;
     lua_pushnumber (L, db > infinity ? pow (10.f, db * 0.05) : 0.0);
     return 1;
 }
@@ -550,13 +550,13 @@ static const luaL_Reg audio_f[] = {
 
 //=============================================================================
 
-LRT_EXPORT int luaopen_dsp_audio (lua_State* L) {
-    luaL_newmetatable (L, LRT_MT_AUDIO_BUFFER);
+LKV_EXPORT int luaopen_kv_audio (lua_State* L) {
+    luaL_newmetatable (L, LKV_MT_AUDIO_BUFFER);
     lua_pushvalue (L, -1);               /* duplicate the metatable */
     lua_setfield (L, -2, "__index");     /* mt.__index = mt */
     luaL_setfuncs (L, audiobuffer_m, 0);
 
-    lrt_vector_metatable (L);
+    kv_vector_metatable (L);
 
     luaL_newlib (L, audio_f);
     return 1;

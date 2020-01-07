@@ -22,8 +22,9 @@ PERFORMANCE OF THIS SOFTWARE.
 
 #include "../src/audio.c"
 #include "../src/midi.c"
-#include "../src/lrtlib.c"
 #include "../src/vector.c"
+#include "../src/kvlib.c"
+#include "../src/kvmod.c"
 
 static const int nchannels = 1;
 static const int nframes   = 512;
@@ -31,13 +32,13 @@ static const int nframes   = 512;
 typedef struct _refdata_t {
     int channels;
     int frames;
-    lrt_sample_t** data;
+    kv_sample_t** data;
 } refdata_t;
 
 static lua_State* open() {
     lua_State* L = luaL_newstate();
     luaL_openlibs (L);
-    lrt_openlibs (L, 0);
+    kv_openlibs (L, 0);
     return L;
 }
 
@@ -51,14 +52,14 @@ static refdata_t* refdata_new (int nc, int nf) {
 
     rd->channels = nc;
     rd->frames = nf;
-    size_t sz = sizeof(lrt_sample_t*) * nc + sizeof(lrt_sample_t) * nc * nf;
+    size_t sz = sizeof(kv_sample_t*) * nc + sizeof(kv_sample_t) * nc * nf;
     rd->data = malloc (sz);
-    lrt_sample_t* ptr = (lrt_sample_t*)(rd->data + nc);
+    kv_sample_t* ptr = (kv_sample_t*)(rd->data + nc);
     int i;
     for (i = 0; i < nc; ++i)
         rd->data[i] = (ptr + i * nf);
     for (i = 0; i < nc; ++i)
-        memset (rd->data[i], 0, sizeof(lrt_sample_t) * (size_t)nf);
+        memset (rd->data[i], 0, sizeof(kv_sample_t) * (size_t)nf);
     return rd;
 }
 
@@ -74,27 +75,27 @@ static void lrt_log (const char* msg) {
     printf ("%s\n", msg);
 }
 
-static void test_basics (lua_State* L, lrt_audio_buffer_t* buf) {
+static void test_basics (lua_State* L, kv_audio_buffer_t* buf) {
     lrt_log ("not NULL");
     assert (buf != NULL);
 
-    assert (lrt_audio_buffer_length (buf) == nframes);
-    lrt_log ("lrt_audio_buffer_length(): ok");
+    assert (kv_audio_buffer_length (buf) == nframes);
+    lrt_log ("kv_audio_buffer_length(): ok");
     
-    assert (lrt_audio_buffer_channels (buf) == nchannels);
-    lrt_log ("lrt_audio_buffer_channels(): ok");
+    assert (kv_audio_buffer_channels (buf) == nchannels);
+    lrt_log ("kv_audio_buffer_channels(): ok");
 }
 
-static void test_referto (lua_State* L, lrt_audio_buffer_t* buf) {
+static void test_referto (lua_State* L, kv_audio_buffer_t* buf) {
     refdata_t* rd = refdata_new (2, 1024);
     assert (rd->frames == 1024);
     assert (rd->channels == 2);
     assert (rd->data != NULL);
-    lrt_audio_buffer_refer_to (buf, rd->data, rd->channels, rd->frames);
-    assert (lrt_audio_buffer_channels (buf) == rd->channels);
-    assert (lrt_audio_buffer_length (buf) == rd->frames);
+    kv_audio_buffer_refer_to (buf, rd->data, rd->channels, rd->frames);
+    assert (kv_audio_buffer_channels (buf) == rd->channels);
+    assert (kv_audio_buffer_length (buf) == rd->frames);
 
-    lrt_sample_t** arr = lrt_audio_buffer_array (buf);
+    kv_sample_t** arr = kv_audio_buffer_array (buf);
     for (int i = 0; i < rd->channels; ++i) {
         assert (rd->data[i] == arr[i]);
         for (int f = 0; f < rd->frames; ++f) {
@@ -104,35 +105,35 @@ static void test_referto (lua_State* L, lrt_audio_buffer_t* buf) {
 
     // reset internal buffer data;
     AudioBuffer* ab = (AudioBuffer*) buf;
-    ab->channels = (lrt_sample_t**) ab->data;
+    ab->channels = (kv_sample_t**) ab->data;
 
     refdata_free (rd);
 }
 
 static void test_foreach (lua_State* L) {
-    MidiBuffer* buf = lrt_midi_buffer_new (L, 0);
+    MidiBuffer* buf = kv_midi_buffer_new (L, 0);
     
     uint8_t data [3];
     data[0] = 0x90;
     data[1] = 100;
     data[2] = 127;
-    lrt_midi_buffer_insert (buf, data, 3, 20);
+    kv_midi_buffer_insert (buf, data, 3, 20);
     data[0] = 0x80;
     data[2] = 0;
-    lrt_midi_buffer_insert (buf, data, 3, 0);
+    kv_midi_buffer_insert (buf, data, 3, 0);
 
     data[0] = 0x90;
     data[1] = 50;
     data[2] = 127;
-    lrt_midi_buffer_insert (buf, data, 3, 10);
+    kv_midi_buffer_insert (buf, data, 3, 10);
     data[0] = 0x80;
     data[2] = 0;
-    lrt_midi_buffer_insert (buf, data, 3, 50);
+    kv_midi_buffer_insert (buf, data, 3, 50);
 
-    lrt_midi_buffer_foreach (buf, i) {
-        printf ("frame=%d\n", lrt_midi_buffer_iter_frame (i));
-        printf ("len=%lld\n", lrt_midi_buffer_iter_size (i));
-        uint8_t* data = lrt_midi_buffer_iter_data (i);
+    kv_midi_buffer_foreach (buf, i) {
+        printf ("frame=%d\n", kv_midi_buffer_iter_frame (i));
+        printf ("len=%lld\n", kv_midi_buffer_iter_size (i));
+        uint8_t* data = kv_midi_buffer_iter_data (i);
         printf ("data1=0x%02x data2=0x%02x data3=0x%02x\n", data[0], data[1], data[2]);
         printf ("\n");
     }
@@ -153,7 +154,7 @@ static void test_api (lua_State* L) {
 }
 
 static void test_audio (lua_State* L) {
-    lrt_audio_buffer_t* buf = lrt_audio_buffer_new (L, nchannels, nframes);
+    kv_audio_buffer_t* buf = kv_audio_buffer_new (L, nchannels, nframes);
     assert (1 == lua_gettop (L));
     test_basics (L, buf);
     test_referto (L, buf);

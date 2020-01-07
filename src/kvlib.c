@@ -19,22 +19,22 @@ PERFORMANCE OF THIS SOFTWARE.
 
 #include <assert.h>
 #include "luainc.h"
-#include "lrt/lrt.h"
+#include "lua-kv.h"
 
-extern int luaopen_dsp (lua_State*);
-extern int luaopen_dsp_audio (lua_State*);
-extern int luaopen_dsp_midi (lua_State*);
-extern int luaopen_dsp_vector (lua_State*);
+extern int luaopen_kv (lua_State*);
+extern int luaopen_kv_audio (lua_State*);
+extern int luaopen_kv_midi (lua_State*);
+extern int luaopen_kv_vector (lua_State*);
 
 static const luaL_Reg lrtmods[] = {
-    { "dsp",        luaopen_dsp },
-    { "dsp.audio",  luaopen_dsp_audio },
-    { "dsp.midi",   luaopen_dsp_midi },
-    { "dsp.vector", luaopen_dsp_vector },
+    { "dsp",        luaopen_kv },
+    { "dsp.audio",  luaopen_kv_audio },
+    { "dsp.midi",   luaopen_kv_midi },
+    { "dsp.vector", luaopen_kv_vector },
     { NULL, NULL }
 };
 
-void lrt_openlibs (lua_State* L, int glb) {
+void kv_openlibs (lua_State* L, int glb) {
     const int top = lua_gettop (L);
     const luaL_Reg* mod = NULL;
     for (mod = lrtmods; mod->func; mod++) {
