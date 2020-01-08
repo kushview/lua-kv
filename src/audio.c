@@ -518,7 +518,7 @@ static int f_round (lua_State* L) {
     return 1;
 }
 
-static int f_gain2db (lua_State* L) {
+static int af_gain2db (lua_State* L) {
     int isnum = 0;
     lua_Number gain = lua_tonumberx (L, 1, &isnum);
     if (isnum == 0) gain = LKV_UNITY_GAIN;
@@ -528,7 +528,7 @@ static int f_gain2db (lua_State* L) {
     return 1;
 }
 
-static int f_dbtogain (lua_State* L) {
+static int af_dbtogain (lua_State* L) {
     int isnum = 0;
     lua_Number db = lua_tonumberx (L, 1, &isnum);
     if (isnum == 0) db = 1.0;
@@ -541,10 +541,10 @@ static int f_dbtogain (lua_State* L) {
 static const luaL_Reg audio_f[] = {
     { "Buffer",     audiobuffer_new },
     { "round",      f_round },
-    { "db2gain",    f_dbtogain },
-    { "dbtogain",   f_dbtogain },
-    { "gain2db",    f_gain2db },
-    { "gaintodb",   f_gain2db },
+    { "db2gain",    af_dbtogain },
+    { "dbtogain",   af_dbtogain },
+    { "gain2db",    af_gain2db },
+    { "gaintodb",   af_gain2db },
     { NULL, NULL }
 };
 

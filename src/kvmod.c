@@ -3,7 +3,7 @@
 #include "luainc.h"
 #include "lua-kv.h"
 
-#if 0
+#if 1
 #define LKV_MINUS_INFINITY_DB   -100.0
 #define LKV_UNITY_GAIN          1.0
 
