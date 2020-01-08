@@ -27,10 +27,10 @@ extern int luaopen_kv_midi (lua_State*);
 extern int luaopen_kv_vector (lua_State*);
 
 static const luaL_Reg lrtmods[] = {
-    { "dsp",        luaopen_kv },
-    { "dsp.audio",  luaopen_kv_audio },
-    { "dsp.midi",   luaopen_kv_midi },
-    { "dsp.vector", luaopen_kv_vector },
+    { "kv",        luaopen_kv },
+    { "kv.audio",  luaopen_kv_audio },
+    { "kv.midi",   luaopen_kv_midi },
+    { "kv.vector", luaopen_kv_vector },
     { NULL, NULL }
 };
 
