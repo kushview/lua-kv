@@ -20,7 +20,11 @@ PERFORMANCE OF THIS SOFTWARE.
 #include <assert.h>
 #include <math.h>
 #include <stdbool.h>
-#include <stdalign.h>
+#ifdef _MSC_VER
+ #include <cstdalign>
+#else
+ #include <stdalign.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 

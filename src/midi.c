@@ -253,7 +253,7 @@ kv_midi_buffer_iter_t kv_midi_buffer_end (kv_midi_buffer_t* buf) {
 kv_midi_buffer_iter_t kv_midi_buffer_next (kv_midi_buffer_t*     buf, 
                                              kv_midi_buffer_iter_t iter)
 {
-    iter += kv_midi_buffer_iter_total_size (iter);
+    ((uintptr_t) iter) += kv_midi_buffer_iter_total_size ((uintptr_t) iter);
     return ((uint8_t*)iter) <= (buf->data + buf->used)
         ? iter : (buf->data + buf->used);
 }
@@ -381,7 +381,11 @@ static int midibuffer_insert (lua_State* L) {
         int size = lua_gettop (L) - 2;
 
         if (size > 1) {
+           #ifndef _MSC_VER
             uint8_t data [size];
+           #else
+            uint8_t data [4];
+           #endif
             int frame = lua_tointeger (L, 2);
 
             for (int i = 0; i < size; ++i) {
