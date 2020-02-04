@@ -251,9 +251,13 @@ kv_midi_buffer_iter_t kv_midi_buffer_end (kv_midi_buffer_t* buf) {
 }
 
 kv_midi_buffer_iter_t kv_midi_buffer_next (kv_midi_buffer_t*     buf, 
-                                             kv_midi_buffer_iter_t iter)
+                                           kv_midi_buffer_iter_t iter)
 {
+   #ifdef _MSC_VER
     ((uintptr_t) iter) += kv_midi_buffer_iter_total_size ((uintptr_t) iter);
+   #else
+    iter += kv_midi_buffer_iter_total_size (iter);
+   #endif
     return ((uint8_t*)iter) <= (buf->data + buf->used)
         ? iter : (buf->data + buf->used);
 }
