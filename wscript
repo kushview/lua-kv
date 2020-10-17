@@ -70,8 +70,7 @@ def build (bld):
         includes    = [ '.', 'src' ],
         name        = 'test',
         target      = 'test',
-        using       = [ 'LUA', 'LUA_LIB' ],
-        linkflags   = [ '-llua' ]
+        use         = [ 'LUA', 'LUA_LIB' ]
     )
 
 def check (ctx):
