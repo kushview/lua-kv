@@ -265,8 +265,7 @@ kv_midi_buffer_iter_t kv_midi_buffer_next (kv_midi_buffer_t*     buf,
 
 //=============================================================================
 
-
-/// Create a new midi.Message
+/// Create a new MIDI Message
 // @function Message
 static int midimessage_new (lua_State* L) {
     const int nargs = lua_gettop (L);
@@ -284,6 +283,20 @@ static int midimessage_new (lua_State* L) {
     return 1;
 }
 
+/// Create an empty MIDI Buffer
+// @function Buffer
+// @return A new midi buffer
+
+/// Create a new MIDI Buffer
+// @param size Size in bytes
+// @function Buffer
+// @return A new MIDI Buffer
+static int midibuffer_new (lua_State* L) {
+    size_t size = (size_t)(lua_gettop(L) > 0 ? MAX(0, lua_tointeger (L, 1)) : 0);
+    kv_midi_buffer_new (L, size);
+    return 1;
+}
+
 /// A MIDI Message
 // @type Message
 
@@ -295,6 +308,10 @@ static int midimessage_gc (lua_State* L) {
     return 0;
 }
 
+/// Update with new MIDI data
+// @param data New midi data
+// @int size Size of data in bytes
+// @type Message
 static int midimessage_update (lua_State* L) {
     MidiMessage* msg = lua_touserdata (L, 1);
     
@@ -309,8 +326,14 @@ static int midimessage_update (lua_State* L) {
     return 0;
 }
 
-/// Returns the midi channel of this Message
+/// Get the channel of this Message.
 // @function channel
+// @return Channel between 1 and 16, otherwise indicates no channel
+
+/// Change the channel of this message.
+// @int channel The new channel for this message. Expected between 1-16 inclusive
+// @function channel
+// @return Channel between 1 and 16, otherwise indicates no channel
 static int midimessage_channel (lua_State* L) {
     MidiMessage* msg = lua_touserdata (L, 1);
     uint8_t* data = kv_midi_message_data (msg);
@@ -330,6 +353,9 @@ static int midimessage_channel (lua_State* L) {
     return 1;
 }
 
+/// Is note on message
+// @function isnoteon
+// @return True if the message is a Note ON
 static int midimessage_isnoteon (lua_State* L) {
     MidiMessage* msg = lua_touserdata (L, 1);
     uint8_t* data = kv_midi_message_data (msg);
@@ -337,6 +363,9 @@ static int midimessage_isnoteon (lua_State* L) {
     return 1;
 }
 
+/// Is note off message
+// @function isnoteoff
+// @return True if the message is a Note OFF
 static int midimessage_isnoteoff (lua_State* L) {
     MidiMessage* msg = lua_touserdata (L, 1);
     uint8_t* data = kv_midi_message_data (msg);
@@ -344,13 +373,18 @@ static int midimessage_isnoteoff (lua_State* L) {
     return 1;
 }
 
-static int midimessage_controller (lua_State* L) {
+/// Is controller message
+// @function iscontroller
+// @return True if the message is a Note ON
+static int midimessage_iscontroller (lua_State* L) {
     MidiMessage* msg = lua_touserdata (L, 1);
     uint8_t* data = kv_midi_message_data (msg);
     lua_pushboolean (L, (data[0] & 0xf0) == 0xb0);
     return 1;
 }
 
+/// Representation as String. tostring(msg)
+// @function __tostring
 static int midimessage_tostring (lua_State* L) {
     MidiMessage* msg = lua_touserdata (L, 1);
     uint8_t* data = kv_midi_message_data (msg);
@@ -362,22 +396,20 @@ static int midimessage_tostring (lua_State* L) {
 }
 
 static const luaL_Reg midimessage_m[] = {
-    { "__gc",       midimessage_gc },
-    { "__tostring", midimessage_tostring },
-    { "update",     midimessage_update },
-    { "channel",    midimessage_channel },
-    { "controller", midimessage_controller },
-    { "noteon",     midimessage_isnoteon },
-    { "noteoff",    midimessage_isnoteoff },
+    { "__gc",         midimessage_gc },
+    { "__tostring",   midimessage_tostring },
+    { "update",       midimessage_update },
+    { "channel",      midimessage_channel },
+    { "iscontroller", midimessage_iscontroller },
+    { "isnoteon",     midimessage_isnoteon },
+    { "isnoteoff",    midimessage_isnoteoff },
     { NULL, NULL }
 };
 
 //=============================================================================
-static int midibuffer_new (lua_State* L) {
-    size_t size = (size_t)(lua_gettop(L) > 0 ? MAX(0, lua_tointeger (L, 1)) : 0);
-    kv_midi_buffer_new (L, size);
-    return 1;
-}
+
+/// A MIDI Buffer containing MIDI Messages
+// @type Buffer
 
 static int midibuffer_gc (lua_State* L) {
     MidiBuffer* buf = lua_touserdata (L, 1);
@@ -385,6 +417,8 @@ static int midibuffer_gc (lua_State* L) {
     return 0;
 }
 
+/// Insert into the buffer
+// @function insert
 static int midibuffer_insert (lua_State* L) {
     MidiBuffer* buf = lua_touserdata (L, 1);
     if (lua_gettop (L) == 3) {
@@ -414,18 +448,27 @@ static int midibuffer_insert (lua_State* L) {
     return 1;
 }
 
+/// Clears the buffer
+// @function clear
 static int midibuffer_clear (lua_State* L) {
     MidiBuffer* buf = lua_touserdata (L, 1);
     buf->used = 0;
     return 0;
 }
 
+/// Total available space of the buffer in bytes
+// @function capacity
+// @return capacity in bytes
 static int midibuffer_capacity (lua_State* L) {
     MidiBuffer* buf = lua_touserdata (L, 1);
     lua_pushinteger (L, (lua_Integer) buf->size);
     return 1;
 }
 
+/// Reserve an amount of space.
+// @param size Size in bytes to reserve
+// @function reserve
+// @return Size reserved in bytes or false
 static int midibuffer_reserve (lua_State* L) {
     MidiBuffer* buf = luaL_checkudata (L, 1, LKV_MT_MIDI_BUFFER);
     if (buf == NULL || lua_gettop (L) < 2) {
@@ -436,10 +479,14 @@ static int midibuffer_reserve (lua_State* L) {
             buf->data = realloc (buf->data, new_size);
             buf->size = new_size;
         }
+        lua_pushinteger (L, new_size);
     }
     return 1;
 }
 
+/// Swap this buffer with another
+// @param buffer The other buffer to swap with
+// @function swap
 static int midibuffer_swap (lua_State* L) {
     MidiBuffer* buf = lua_touserdata (L, 1);
     
@@ -499,6 +546,9 @@ static int midibuffer_events_msg_f (lua_State* L) {
     return 1;
 }
 
+/// Events iterator.  Iterate over messages in this buffer
+// @function events
+// @return message iterator
 static int midibuffer_events (lua_State* L) {
     MidiBuffer* buf = lua_touserdata (L, 1);
     int nargs = lua_gettop (L) - 1;
