@@ -260,8 +260,15 @@ static void kv_audio_buffer_clear_channel (AudioBuffer* buf, int channel) {
 
 //=============================================================================
 
-/// Creates a new audio.Buffer
+/// Creates a empty audio buffer.
 // @function Buffer
+// @return An empty buffer.
+
+/// Creates a new audio buffer with the specified channel and sample counts
+// @param nchannels Number of channels
+// @param nframes Number of samples in each channel
+// @function Buffer
+// @return Newly created audio buffer
 static int audiobuffer_new (lua_State* L) {
     int nchans = 0, nframes = 0;
     if (lua_gettop (L) >= 2 && lua_isinteger (L, 1) && lua_isinteger (L, 2)) {
@@ -282,7 +289,22 @@ static int audiobuffer_gc (lua_State* L) {
     return 0;
 }
 
-/// Clears the audio buffer
+/// Clears the entire audio buffer
+// @function clear
+
+/// Clears one channel in the audio buffer
+// @int channel The channel to clear
+// @function clear
+
+/// Clears a range of samples on all channels
+// @int start Sample index to start on
+// @int count Number of samples to clear
+// @function clear
+
+/// Clears a range of samples on one channel
+// @int channel The channel to clear
+// @int start Sample index to start on
+// @int count Number of samples to clear
 // @function clear
 static int audiobuffer_clear (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
@@ -317,6 +339,7 @@ static int audiobuffer_clear (lua_State* L) {
 
 /// Returns true if the buffer has been cleared
 // @function cleared
+// @return true if already cleared
 static int audiobuffer_cleared (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
     lua_pushboolean (L, buf != NULL ? buf->cleared : false);
@@ -325,6 +348,7 @@ static int audiobuffer_cleared (lua_State* L) {
 
 /// returns the number of samples in the buffer
 // @function length
+// @return size of the buffer in samples
 static int audiobuffer_length (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
     lua_pushinteger (L, buf != NULL ? buf->nframes : 0);
@@ -332,16 +356,19 @@ static int audiobuffer_length (lua_State* L) {
 }
 
 /// Channel count
-// @return the number of channels held in the buffer */
+// @function channels
+// @return the number of channels held in the buffer
 static int audiobuffer_channels (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
     lua_pushinteger (L, buf != NULL ? buf->nchannels : 0);
     return 1;
 }
 
-/// Get 
+/// Get a single value from the buffer
+// @param channel The channel to get from
+// @param frame The sample index to get
 // @function get
-// @return the number of channels held in the buffer */
+// @return the number of channels held in the buffer
 static int audiobuffer_get (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
     if (buf == NULL || buf->nchannels <= 0 || buf->nframes <= 0 || lua_gettop(L) < 3) {
@@ -356,7 +383,8 @@ static int audiobuffer_get (lua_State* L) {
     return 1;
 }
 
-/// Vector
+/// Get the sample vector for a channel
+// @param channel The channel to get
 // @function vector
 static int audiobuffer_vector (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
@@ -369,7 +397,10 @@ static int audiobuffer_vector (lua_State* L) {
     return 1;
 }
 
-/// Set
+/// Set a single sample in the buffer
+// @param channel The channel to set on
+// @param frame The frame index to set
+// @param value The value to set
 // @function set
 static int audiobuffer_set (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
@@ -383,23 +414,39 @@ static int audiobuffer_set (lua_State* L) {
     return 0;
 }
 
-/// Array
+/// Get raw multi channel data
 // @function array
+// @return Raw C array of channel data as lightuserdata
 static int audiobuffer_array (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
     lua_pushlightuserdata (L, buf->channels);
     return 1;
 }
 
-/// Raw
+/// Get raw single channel data
+// @param channel The channel to get
 // @function raw
+// @return Raw data for a single channel as lightuserdata
 static int audiobuffer_raw (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
     lua_pushlightuserdata (L, buf->channels[lua_tointeger(L, 2)]);
     return 1;
 }
 
-/// Apply Gain
+/// Apply gain to all channels and samples
+// @number gain Gain to apply to all channels
+// @function applygain
+
+/// Apply gain to a single channel
+// @int channel Channel to apply gain to
+// @number gain Gain to apply to a channel
+// @function applygain
+
+/// Apply gain to a single channel with range
+// @int channel Channel to apply gain to
+// @int start Sample index to start at
+// @int count Number of samples to process
+// @number gain Amount of gain to apply
 // @function applygain
 static int audiobuffer_applygain (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
@@ -441,7 +488,17 @@ static int audiobuffer_applygain (lua_State* L) {
     return 0;
 }
 
-/// Fade
+/// Fade the buffer from starting gain to ending gain
+// @number startgain Starting gain
+// @number endgain End gain
+// @function fade
+
+/// Fade the buffer from starting gain to ending gain
+// @int channel Channel to apply to
+// @int start Sample to start at
+// @int count Number of samples to process
+// @number startgain Starting gain
+// @number endgain End gain
 // @function fade
 static int audiobuffer_fade (lua_State* L) {
     AudioBuffer* buf  = lua_touserdata (L, 1);
@@ -486,6 +543,11 @@ static int audiobuffer_fade (lua_State* L) {
     return 0;
 }
 
+/// Refer internal data to another source
+// @param data Data to refer to
+// @param nchannels Number of channels in new source
+// @param nframes Number of samples in new source
+// @function referto
 static int audiobuffer_referto (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
     kv_sample_t* const* data = lua_touserdata (L, 2);
@@ -495,6 +557,7 @@ static int audiobuffer_referto (lua_State* L) {
     return 0;
 }
 
+/// @function __tostring
 static int audiobuffer_tostring (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
     lua_pushfstring (L, "AudioBuffer: channels=%d length=%d",
