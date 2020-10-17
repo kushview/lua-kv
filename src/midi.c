@@ -14,8 +14,9 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 */
 
-/// MIDI module.
-// @module lrt.midi
+/// Audio classes and utilities
+// @author Michael Fisher
+// @module kv.midi
 
 #include <assert.h>
 #include <stdlib.h>
@@ -263,6 +264,10 @@ kv_midi_buffer_iter_t kv_midi_buffer_next (kv_midi_buffer_t*     buf,
 }
 
 //=============================================================================
+
+
+/// Create a new midi.Message
+// @function Message
 static int midimessage_new (lua_State* L) {
     const int nargs = lua_gettop (L);
 
@@ -278,6 +283,9 @@ static int midimessage_new (lua_State* L) {
 
     return 1;
 }
+
+/// A MIDI Message
+// @type Message
 
 static int midimessage_gc (lua_State* L) {
     MidiMessage* msg = lua_touserdata (L, 1);
@@ -301,6 +309,8 @@ static int midimessage_update (lua_State* L) {
     return 0;
 }
 
+/// Returns the midi channel of this Message
+// @function channel
 static int midimessage_channel (lua_State* L) {
     MidiMessage* msg = lua_touserdata (L, 1);
     uint8_t* data = kv_midi_message_data (msg);

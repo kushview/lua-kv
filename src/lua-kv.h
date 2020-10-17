@@ -56,7 +56,7 @@ typedef lua_Number                          kv_sample_t;
 typedef struct kv_audio_buffer_impl_t      kv_audio_buffer_t;
 typedef struct kv_midi_message_impl_t      kv_midi_message_t;
 typedef struct kv_midi_buffer_impl_t       kv_midi_buffer_t;
-typedef void*                               kv_midi_buffer_iter_t;
+typedef void*                              kv_midi_buffer_iter_t;
 typedef struct kv_midi_pipe_impl_t         kv_midi_pipe_t;
 typedef struct kv_vector_impl_t            kv_vector_t;
 
@@ -100,16 +100,15 @@ kv_audio_buffer_t* kv_audio_buffer_new (lua_State* L,
                                           int        num_frames);
 
 /** Refer the given buffer to a set of external audio channels
- 
     @param buffer       The audio buffer
     @param data         External data to refer to
     @param nchannels    Number of channels is external data
     @param nframes      Number of samples in each external data channel
 */
 void kv_audio_buffer_refer_to (kv_audio_buffer_t*  buffer,
-                                kv_sample_t* const* data,
-                                int                  nchannels,
-                                int                  nframes);
+                               kv_sample_t* const* data,
+                               int                 nchannels,
+                               int                 nframes);
 
 /** Returs this buffer's channel count */
 int kv_audio_buffer_channels (kv_audio_buffer_t*);
@@ -124,7 +123,6 @@ kv_sample_t** kv_audio_buffer_array (kv_audio_buffer_t*);
 kv_sample_t* kv_audio_buffer_channel (kv_audio_buffer_t*, int channel);
 
 /** Resize this buffer
-
     @param buffer       Buffer to resize
     @param nchannels    New channel count
     @param nframes      New sample count
@@ -133,11 +131,11 @@ kv_sample_t* kv_audio_buffer_channel (kv_audio_buffer_t*, int channel);
     @param norealloc    Avoid re-allocating if possible
 */
 void kv_audio_buffer_resize (kv_audio_buffer_t* buffer,
-                              int                 nchannels, 
-                              int                 nframes,
-                              bool                preserve, 
-                              bool                clear,
-                              bool                norealloc);
+                             int                nchannels, 
+                             int                nframes,
+                             bool               preserve, 
+                             bool               clear,
+                             bool               norealloc);
 
 void kv_audio_buffer_duplicate (kv_audio_buffer_t*        buffer,
                                  const kv_sample_t* const* source,

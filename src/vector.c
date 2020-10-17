@@ -1,4 +1,21 @@
+/*
+Copyright 2019 Michael Fisher <mfisher@kushview.net>
 
+Permission to use, copy, modify, and/or distribute this software for any 
+purpose with or without fee is hereby granted, provided that the above 
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, 
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR 
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR 
+PERFORMANCE OF THIS SOFTWARE.
+*/
+
+/// A vector of `kv_sample_t`'s suitable for realtime
+// @module kv.vector
 #include <stdlib.h>
 #include <string.h>
 #include "luainc.h"
@@ -75,20 +92,6 @@ void kv_vector_resize (kv_vector_t* vec, int size) {
     }
 }
 
-//=============================================================================
-/***
-An array of floating point values
-@type Vector
-@within lrt
-*/
-
-/***
-Creates a new vector
-@function Vector
-@within lrt
-*/
-
-
 static int vector_gc (lua_State* L) {
     kv_vector_free_values (lua_touserdata (L, 1));
     return 0;
@@ -137,15 +140,21 @@ static const luaL_Reg vector_m[] = {
 };
 
 //=============================================================================
+
+/// Creates a new vector
+// @param size Number of elements
+// @function new
 static int f_new (lua_State* L) {
     if (NULL == kv_vector_new (L, MAX (0, lua_tointeger (L, 1))))
         lua_pushnil (L);
     return 1;
 }
 
+/// Clears a vector
+// @param vec The vector to clear
+// @function clear
 static int f_clear (lua_State* L) {
     kv_vector_t* vec = luaL_checkudata (L, 1, LKV_MT_VECTOR);
-    
     if (vec->used <= 0 || vec->values == NULL) {
         return 0;
     }
@@ -160,10 +169,18 @@ static int f_clear (lua_State* L) {
     return 0;
 }
 
+/// Reserve a number of elements
+// @param vec The vector to operate on
+// @param size Number of elements to allocate memory for
+// @function reserve
 static int f_reserve (lua_State* L) {
     return 0;
 }
 
+/// Resize a vector
+// @param vec The vector to clear
+// @param size The new number of elements to allocate
+// @function resize
 static int f_resize (lua_State* L) {
     return 0;
 }

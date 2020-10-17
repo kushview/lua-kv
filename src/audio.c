@@ -14,8 +14,9 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 */
 
-/// Lua RT - Audio
-// @module lrt.audio
+/// Audio classes and utilities
+// @author Michael Fisher
+// @module kv.audio
 
 #include <assert.h>
 #include <math.h>
@@ -47,7 +48,7 @@ struct kv_audio_buffer_impl_t {
     char* data;
     kv_sample_t** channels;                // channels actually used
     kv_sample_t* prealloc [LKV_NPREALLOC]; // pre-allocated channel space
-    bool cleared;                           // true if buffer has been cleared
+    bool cleared;                          // true if buffer has been cleared
 };
 
 typedef struct kv_audio_buffer_impl_t  AudioBuffer;
@@ -259,15 +260,8 @@ static void kv_audio_buffer_clear_channel (AudioBuffer* buf, int channel) {
 
 //=============================================================================
 
-/***
-An audio buffer
-@type Buffer
-*/
-
-/***
-@function Buffer
-@within audio
-*/
+/// Creates a new audio.Buffer
+// @function Buffer
 static int audiobuffer_new (lua_State* L) {
     int nchans = 0, nframes = 0;
     if (lua_gettop (L) >= 2 && lua_isinteger (L, 1) && lua_isinteger (L, 2)) {
@@ -278,6 +272,9 @@ static int audiobuffer_new (lua_State* L) {
     return 1;
 }
 
+/// An audio buffer
+// @type Buffer
+
 static int audiobuffer_gc (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
     kv_audio_buffer_free_data (buf);
@@ -285,10 +282,8 @@ static int audiobuffer_gc (lua_State* L) {
     return 0;
 }
 
-/**
-Clears the audio buffer
-@function clear
-*/
+/// Clears the audio buffer
+// @function clear
 static int audiobuffer_clear (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
     if (buf == NULL)
@@ -320,27 +315,33 @@ static int audiobuffer_clear (lua_State* L) {
     return 0;
 }
 
+/// Returns true if the buffer has been cleared
+// @function cleared
 static int audiobuffer_cleared (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
     lua_pushboolean (L, buf != NULL ? buf->cleared : false);
     return 1;
 }
 
-/** returns the number of samples in the buffer */
+/// returns the number of samples in the buffer
+// @function length
 static int audiobuffer_length (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
     lua_pushinteger (L, buf != NULL ? buf->nframes : 0);
     return 1;
 }
 
-/** returns the number of channels held in the buffer */
+/// Channel count
+// @return the number of channels held in the buffer */
 static int audiobuffer_channels (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
     lua_pushinteger (L, buf != NULL ? buf->nchannels : 0);
     return 1;
 }
 
-/** returns the number of channels held in the buffer */
+/// Get 
+// @function get
+// @return the number of channels held in the buffer */
 static int audiobuffer_get (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
     if (buf == NULL || buf->nchannels <= 0 || buf->nframes <= 0 || lua_gettop(L) < 3) {
@@ -355,7 +356,9 @@ static int audiobuffer_get (lua_State* L) {
     return 1;
 }
 
-static int audiobuffer_vec (lua_State* L) {
+/// Vector
+// @function vector
+static int audiobuffer_vector (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
     lua_Integer i = lua_tointeger (L, 2) - 1;
     if (i >= 0 && i < buf->nchannels) {
@@ -366,6 +369,8 @@ static int audiobuffer_vec (lua_State* L) {
     return 1;
 }
 
+/// Set
+// @function set
 static int audiobuffer_set (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
     if (buf == NULL || lua_gettop (L) < 4)
@@ -378,18 +383,24 @@ static int audiobuffer_set (lua_State* L) {
     return 0;
 }
 
+/// Array
+// @function array
 static int audiobuffer_array (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
     lua_pushlightuserdata (L, buf->channels);
     return 1;
 }
 
+/// Raw
+// @function raw
 static int audiobuffer_raw (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
     lua_pushlightuserdata (L, buf->channels[lua_tointeger(L, 2)]);
     return 1;
 }
 
+/// Apply Gain
+// @function applygain
 static int audiobuffer_applygain (lua_State* L) {
     AudioBuffer* buf = lua_touserdata (L, 1);
     switch (lua_gettop (L)) {
@@ -430,6 +441,8 @@ static int audiobuffer_applygain (lua_State* L) {
     return 0;
 }
 
+/// Fade
+// @function fade
 static int audiobuffer_fade (lua_State* L) {
     AudioBuffer* buf  = lua_touserdata (L, 1);
     switch (lua_gettop (L)) {
@@ -511,7 +524,7 @@ static const luaL_Reg audiobuffer_m[] = {
     { "set",        audiobuffer_set },
     { "applygain",  audiobuffer_applygain },
     { "apply",      audiobuffer_apply },
-    { "vector",     audiobuffer_vec },
+    { "vector",     audiobuffer_vector },
     { "fade",       audiobuffer_fade },
     { NULL, NULL }
 };
