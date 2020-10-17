@@ -145,9 +145,9 @@ local function testnotes (b)
 
    for f in b:events(m) do
       if tick % 2 == 0 then
-         expect (m:noteon(), string.format("not note on: %s", tostring(m)))
+         expect (m:isnoteon(), string.format("not note on: %s", tostring(m)))
       else
-         expect (m:noteoff(), string.format("not note off: %s", tostring(m)))
+         expect (m:isnoteoff(), string.format("not note off: %s", tostring(m)))
       end
 
       if tick % 4 == 0 or tick % 4 == 1 then
