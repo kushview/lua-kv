@@ -65,13 +65,19 @@ def build (bld):
         src/kvmod.c'''
     .split())
     
-    bld.program (
+    tests = bld.program (
         source      = [ 'tests/test.c' ],
         includes    = [ '.', 'src' ],
         name        = 'test',
         target      = 'test',
-        use         = [ 'LUA', 'LUA_LIB' ]
+        use         = [ 'LUA', 'LUA_LIB' ],
+        linkflags   = []
     )
+
+    if 'linux' in sys.platform:
+        tests.linkflags.append ('-Wl,--no-as-needed')
+        tests.linkflags.append ('-lm')
+        tests.linkflags.append ('-ldl')
 
 def check (ctx):
     if not os.path.exists('build/test'):
