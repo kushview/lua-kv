@@ -42,8 +42,8 @@ local function begin_test (name)
 end
 
 local function test_db()
-   expect (audio.dbtogain (0.0) == 1.0)
-   expect (audio.gaintodb (1.0) == 0.0)
+   expect (audio.togain (0.0) == 1.0)
+   expect (audio.todecibels (1.0) == 0.0)
 end
 
 local function test_audiobuffer()

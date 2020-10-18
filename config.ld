@@ -4,8 +4,7 @@ description = 'Lua Standard Libraries'
 file = { 
     'src',
     exclude = {
-        'src/lua-kv.h',
-        'src/kvmod.c'
+        'src/lua-kv.h'
     } 
 }
 dir = 'build/doc/lua'

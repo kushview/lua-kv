@@ -599,24 +599,21 @@ static const luaL_Reg audiobuffer_m[] = {
 /// Utilities
 // @section utils
 
-/// Round to kv_sample_t
+/// Round to float
 // @function round
 // @number input Value to round
-// @return number Rounded to the nearest kv_sample_t
+// @return number - Rounded to the nearest sample value
 static int f_round (lua_State* L) {
     lua_pushnumber (L, (lua_Number)(kv_sample_t) lua_tonumber (L, 1));
     return 1;
 }
 
-/// Alias to gaintodb
-// @function gain2db
-// @see gaintodb
-
 /// Convert gain to decibels
-// @number db Decibels input
+// @number gain Gain input
 // @number infinity Default -100.0
-// @function gaintodb
-static int af_gain2db (lua_State* L) {
+// @function todecibels
+// @return number - Decibel value
+static int f_todecibels (lua_State* L) {
     int isnum = 0;
     lua_Number gain = lua_tonumberx (L, 1, &isnum);
     if (isnum == 0) gain = LKV_UNITY_GAIN;
@@ -626,15 +623,12 @@ static int af_gain2db (lua_State* L) {
     return 1;
 }
 
-/// Alias to dbtogain
-// @function db2gain
-// @see dbtogain
-
 /// Convert decibels to gain
 // @number db Decibels input
 // @number infinity Default -100.0
-// @function dbtogain
-static int af_dbtogain (lua_State* L) {
+// @function togain
+// @return number - Gain value
+static int f_togain (lua_State* L) {
     int isnum = 0;
     lua_Number db = lua_tonumberx (L, 1, &isnum);
     if (isnum == 0) db = 1.0;
@@ -645,12 +639,10 @@ static int af_dbtogain (lua_State* L) {
 }
 
 static const luaL_Reg audio_f[] = {
-    { "Buffer",     audiobuffer_new },
-    { "round",      f_round },
-    { "db2gain",    af_dbtogain },
-    { "dbtogain",   af_dbtogain },
-    { "gain2db",    af_gain2db },
-    { "gaintodb",   af_gain2db },
+    { "Buffer",      audiobuffer_new },
+    { "round",       f_round },
+    { "togain",      f_togain },
+    { "todecibels",  f_todecibels },
     { NULL, NULL }
 };
 
