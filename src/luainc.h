@@ -24,6 +24,11 @@ extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
 
+#if (LUA_VERSION_NUM < 503)
+ #pragma error "Lua KV requires Lua v5.3.5 or higher"
+ #pragma GCC error "Lua KV requires Lua v5.3.5 or higher"
+#endif
+
 #ifdef __cplusplus
 }
 #endif
