@@ -66,12 +66,13 @@ def build (bld):
     .split())
     
     tests = bld.program (
-        source      = [ 'tests/test.c' ],
-        includes    = [ '.', 'src' ],
-        name        = 'test',
-        target      = 'test',
-        use         = [ 'LUA', 'LUA_LIB' ],
-        linkflags   = []
+        source       = [ 'tests/test.c' ],
+        includes     = [ '.', 'src' ],
+        name         = 'test',
+        target       = 'test',
+        use          = [ 'LUA', 'LUA_LIB' ],
+        linkflags    = [],
+        install_path = None
     )
 
     if 'linux' in sys.platform:
