@@ -12,7 +12,6 @@
 -- OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 -- PERFORMANCE OF THIS SOFTWARE.
 
-local kv     = require ('kv')
 local vector = require ('kv.vector')
 local audio  = require ('kv.audio')
 local midi   = require ('kv.midi')
