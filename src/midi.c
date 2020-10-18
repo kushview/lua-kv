@@ -297,6 +297,20 @@ static int midibuffer_new (lua_State* L) {
     return 1;
 }
 
+/// Create a new MIDI Pipe
+// @param size Number of buffers
+// @function Pipe
+// @return a new MIDI Pipe
+static int midipipe_new (lua_State* L) {
+    lua_Integer nbuffers = 0;
+    if (lua_gettop (L) > 0) {
+        nbuffers = MAX (0, lua_tointeger (L, 1));
+    }
+
+    kv_midi_pipe_new (L, nbuffers);
+    return 1;
+}
+
 /// A MIDI Message
 // @type Message
 
@@ -576,15 +590,9 @@ static const luaL_Reg midibuffer_m[] = {
 };
 
 //=============================================================================
-static int midipipe_new (lua_State* L) {
-    lua_Integer nbuffers = 0;
-    if (lua_gettop (L) > 0) {
-        nbuffers = MAX (0, lua_tointeger (L, 1));
-    }
 
-    kv_midi_pipe_new (L, nbuffers);
-    return 1;
-}
+/// An array of MIDI Buffers
+// @type Pipe
 
 static int midipipe_gc (lua_State* L) {
     MidiPipe* pipe = lua_touserdata (L, 1);
@@ -592,18 +600,24 @@ static int midipipe_gc (lua_State* L) {
     return 0;
 }
 
+/// Number of buffers
+// @function __len
 static int midipipe_len (lua_State* L) {
     MidiPipe* pipe = lua_touserdata (L, 1);
     lua_pushinteger (L, pipe->size);
     return 1;
 }
 
+/// tostring support
+// @function __tostring
 static int midipipe_tostring (lua_State* L) {
     MidiPipe* pipe = luaL_checkudata (L, 1, LKV_MT_MIDI_PIPE);
     lua_pushfstring (L, "MidiPipe: nbuffers=%d", pipe->size);
     return 1;
 }
 
+/// Clear all buffers
+// @function clear
 static int midipipe_clear (lua_State* L) {
     MidiPipe* pipe = lua_touserdata (L, 1);
 
@@ -619,6 +633,10 @@ static int midipipe_clear (lua_State* L) {
     return 0;
 }
 
+/// Get a buffer from the pipe
+// @int Buffer index to get
+// @function get
+// @return the MIDI buffer
 static int midipipe_get (lua_State* L) {
     MidiPipe* pipe = lua_touserdata (L, 1);
     lua_Integer index = lua_tointeger (L, 2) - 1;
@@ -630,6 +648,7 @@ static int midipipe_get (lua_State* L) {
     return 1;
 }
 
+// TODO
 static int midipipe_index (lua_State* L) {
     MidiPipe* pipe = lua_touserdata (L, 1);
     if (lua_isinteger (L, 2)) {
@@ -647,6 +666,7 @@ static int midipipe_index (lua_State* L) {
     return 1;
 }
 
+// TODO
 static int midipipe_newindex (lua_State* L) {
     return 0;
 }
