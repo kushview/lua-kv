@@ -61,8 +61,7 @@ def build (bld):
     build_module (bld, 'kv', '''
         src/audio.c
         src/midi.c
-        src/vector.c
-        src/kvmod.c'''
+        src/vector.c'''
     .split())
     
     tests = bld.program (

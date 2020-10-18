@@ -14,7 +14,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 */
 
-/// Audio classes and utilities
+/// MIDI classes and utilities
 // @author Michael Fisher
 // @module kv.midi
 
@@ -138,8 +138,8 @@ static uint8_t* kv_midi_message_data (kv_midi_message_t* msg) {
 }
 
 static void kv_midi_message_update (kv_midi_message_t* msg, 
-                                     uint8_t*            data, 
-                                     lua_Integer         size)
+                                    uint8_t*           data, 
+                                    lua_Integer        size)
 {
     memcpy (kv_midi_message_data (msg), data, size);
     msg->size = size;
@@ -265,8 +265,18 @@ kv_midi_buffer_iter_t kv_midi_buffer_next (kv_midi_buffer_t*     buf,
 
 //=============================================================================
 
+/// Constructors
+// @section ctors
+
 /// Create a new MIDI Message
+// @function MidiMessage
+// @within Constructors
+
+/// Create a new MIDI Message
+// @int msg MIDI message packed in Integer
 // @function Message
+// @within Constructors
+// @usage local msg = midi.Message (midi.noteon (1, 65, 100))
 static int midimessage_new (lua_State* L) {
     const int nargs = lua_gettop (L);
 
@@ -286,11 +296,13 @@ static int midimessage_new (lua_State* L) {
 /// Create an empty MIDI Buffer
 // @function Buffer
 // @return A new midi buffer
+// @within Constructors
 
 /// Create a new MIDI Buffer
 // @param size Size in bytes
 // @function Buffer
 // @return A new MIDI Buffer
+// @within Constructors
 static int midibuffer_new (lua_State* L) {
     size_t size = (size_t)(lua_gettop(L) > 0 ? MAX(0, lua_tointeger (L, 1)) : 0);
     kv_midi_buffer_new (L, size);
@@ -301,6 +313,7 @@ static int midibuffer_new (lua_State* L) {
 // @param size Number of buffers
 // @function Pipe
 // @return a new MIDI Pipe
+// @within Constructors
 static int midipipe_new (lua_State* L) {
     lua_Integer nbuffers = 0;
     if (lua_gettop (L) > 0) {
@@ -313,7 +326,7 @@ static int midipipe_new (lua_State* L) {
 
 /// A MIDI Message
 // @type Message
-
+// @within Classes
 static int midimessage_gc (lua_State* L) {
     MidiMessage* msg = lua_touserdata (L, 1);
     if (msg->allocated) {
@@ -325,7 +338,7 @@ static int midimessage_gc (lua_State* L) {
 /// Update with new MIDI data
 // @param data New midi data
 // @int size Size of data in bytes
-// @type Message
+// @function update
 static int midimessage_update (lua_State* L) {
     MidiMessage* msg = lua_touserdata (L, 1);
     
@@ -424,7 +437,6 @@ static const luaL_Reg midimessage_m[] = {
 
 /// A MIDI Buffer containing MIDI Messages
 // @type Buffer
-
 static int midibuffer_gc (lua_State* L) {
     MidiBuffer* buf = lua_touserdata (L, 1);
     kv_midi_buffer_free_data (buf);
@@ -433,6 +445,9 @@ static int midibuffer_gc (lua_State* L) {
 
 /// Insert into the buffer
 // @function insert
+// @int frame Sample index to insert at
+// @int data Integer packed MIDI data
+// @return Bytes written
 static int midibuffer_insert (lua_State* L) {
     MidiBuffer* buf = lua_touserdata (L, 1);
     if (lua_gettop (L) == 3) {
@@ -634,7 +649,7 @@ static int midipipe_clear (lua_State* L) {
 }
 
 /// Get a buffer from the pipe
-// @int Buffer index to get
+// @int buffer Buffer index to get
 // @function get
 // @return the MIDI buffer
 static int midipipe_get (lua_State* L) {
@@ -681,6 +696,10 @@ static const luaL_Reg midipipe_m[] = {
 };
 
 //=============================================================================
+
+/// Messages
+// @section messages
+
 static int f_msg3bytes (lua_State* L, uint8_t status) {
     lua_Integer block = 0;
     uint8_t* data = (uint8_t*) &block;
@@ -691,9 +710,47 @@ static int f_msg3bytes (lua_State* L, uint8_t status) {
     return 1;
 }
 
+/// Make a controller message
+// @function controller
+// @int channel MIDI Channel
+// @int controller Controller number
+// @int value Controller Value
+// @return MIDI message packed as Integer
+// @within Messages
+// @see Message
 static int f_controller (lua_State* L)  { return f_msg3bytes (L, 0xb0); }
+
+/// Make a note on message
+// @function noteon
+// @int channel MIDI Channel
+// @int note Note number 0-127
+// @int velocity Note velocity 0-127
+// @return MIDI message packed as Integer
+// @within Messages
+// @see Message
 static int f_noteon (lua_State* L)      { return f_msg3bytes (L, 0x90); }
-static int f_noteoff (lua_State* L)     { return f_msg3bytes (L, 0x80); }
+
+/// Make a regular note off message
+// @function noteoff
+// @int channel     MIDI Channel
+// @int note        Note number
+// @return          MIDI message packed as Integer
+// @within Messages
+// @see Message
+
+/// Make a note off message with velocity
+// @function noteoff
+// @int channel     MIDI Channel
+// @int note        Note number
+// @int velocity    Note velocity
+// @return          MIDI message packed as Integer
+// @within Messages
+// @see Message
+static int f_noteoff (lua_State* L) { 
+    if (lua_gettop (L) == 2)
+        lua_pushinteger (L, 0x00);
+    return f_msg3bytes (L, 0x80);
+}
 
 static const luaL_Reg midi_f[] = {
     { "Message",    midimessage_new },

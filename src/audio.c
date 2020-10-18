@@ -263,12 +263,14 @@ static void kv_audio_buffer_clear_channel (AudioBuffer* buf, int channel) {
 /// Creates a empty audio buffer.
 // @function Buffer
 // @return An empty buffer.
+// @within Constructors
 
 /// Creates a new audio buffer with the specified channel and sample counts
 // @param nchannels Number of channels
 // @param nframes Number of samples in each channel
 // @function Buffer
 // @return Newly created audio buffer
+// @within Constructors
 static int audiobuffer_new (lua_State* L) {
     int nchans = 0, nframes = 0;
     if (lua_gettop (L) >= 2 && lua_isinteger (L, 1) && lua_isinteger (L, 2)) {
@@ -593,11 +595,27 @@ static const luaL_Reg audiobuffer_m[] = {
 };
 
 //=============================================================================
+
+/// Utilities
+// @section utils
+
+/// Round to kv_sample_t
+// @function round
+// @number input Value to round
+// @return number Rounded to the nearest kv_sample_t
 static int f_round (lua_State* L) {
     lua_pushnumber (L, (lua_Number)(kv_sample_t) lua_tonumber (L, 1));
     return 1;
 }
 
+/// Alias to gaintodb
+// @function gain2db
+// @see gaintodb
+
+/// Convert gain to decibels
+// @number db Decibels input
+// @number infinity Default -100.0
+// @function gaintodb
 static int af_gain2db (lua_State* L) {
     int isnum = 0;
     lua_Number gain = lua_tonumberx (L, 1, &isnum);
@@ -608,6 +626,14 @@ static int af_gain2db (lua_State* L) {
     return 1;
 }
 
+/// Alias to dbtogain
+// @function db2gain
+// @see dbtogain
+
+/// Convert decibels to gain
+// @number db Decibels input
+// @number infinity Default -100.0
+// @function dbtogain
 static int af_dbtogain (lua_State* L) {
     int isnum = 0;
     lua_Number db = lua_tonumberx (L, 1, &isnum);

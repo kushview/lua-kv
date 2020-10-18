@@ -18,13 +18,11 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "luainc.h"
 #include "lua-kv.h"
 
-extern int luaopen_kv (lua_State*);
 extern int luaopen_kv_audio (lua_State*);
 extern int luaopen_kv_midi (lua_State*);
 extern int luaopen_kv_vector (lua_State*);
 
 static const luaL_Reg lrtmods[] = {
-    { "kv",        luaopen_kv },
     { "kv.audio",  luaopen_kv_audio },
     { "kv.midi",   luaopen_kv_midi },
     { "kv.vector", luaopen_kv_vector },

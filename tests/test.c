@@ -24,7 +24,6 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "../src/midi.c"
 #include "../src/vector.c"
 #include "../src/kvlib.c"
-#include "../src/kvmod.c"
 
 static const int nchannels = 1;
 static const int nframes   = 512;
