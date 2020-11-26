@@ -1,4 +1,7 @@
 #!/bin/bash
 set -e
-LUA_CPATH="build/modules/?.so" lua "tests/test.lua"
+export LUA_CPATH="build/modules/?.so"
+export LUA_PATH="src/?.lua"
+# lua tests/test.lua
+lua tests/object.lua
 exit $?
