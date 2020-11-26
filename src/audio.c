@@ -281,7 +281,7 @@ static int audiobuffer_new (lua_State* L) {
     return 1;
 }
 
-/// An audio buffer
+/// An audio buffer.
 // @type Buffer
 
 static int audiobuffer_gc (lua_State* L) {
@@ -291,14 +291,14 @@ static int audiobuffer_gc (lua_State* L) {
     return 0;
 }
 
-/// Clears the entire audio buffer
+/// Clears the entire audio buffer.
 // @function clear
 
-/// Clears one channel in the audio buffer
+/// Clears one channel in the audio buffer.
 // @int channel The channel to clear
 // @function clear
 
-/// Clears a range of samples on all channels
+/// Clears a range of samples on all channels.
 // @int start Sample index to start on
 // @int count Number of samples to clear
 // @function clear
@@ -623,11 +623,11 @@ static int f_todecibels (lua_State* L) {
     return 1;
 }
 
-/// Convert decibels to gain
+/// Convert decibels to gain.
 // @number db Decibels input
 // @number infinity Default -100.0
 // @function togain
-// @return number - Gain value
+// @return number Gain value
 static int f_togain (lua_State* L) {
     int isnum = 0;
     lua_Number db = lua_tonumberx (L, 1, &isnum);
@@ -647,7 +647,6 @@ static const luaL_Reg audio_f[] = {
 };
 
 //=============================================================================
-
 LKV_EXPORT int luaopen_kv_audio (lua_State* L) {
     luaL_newmetatable (L, LKV_MT_AUDIO_BUFFER);
     lua_pushvalue (L, -1);               /* duplicate the metatable */
