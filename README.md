@@ -1,20 +1,20 @@
 # Lua KV
 A set of Lua libraries for use in a real time environment.
 
-#### Building
+## Building
 ```
 ./waf configure
 ./waf build
 ```
 
-#### Installing
+## Installing
 _may need `sudo` here_
 ```
 ./waf install
 ```
 The above will install to `$PREFIX/lib/lua/5.3`
 
-#### Usage
+## Usage
 __Converting Decibels to Gain and Back__
 ```lua
 local kv = require ('kv')
@@ -29,11 +29,11 @@ local gain = kv.dbtogain (6.0, minus_infinity)
 local vol  = kv.gaintodb (gain, minus_infinity)
 ```
 
-#### Project Inclusion
+## Project Inclusion
 1) Compile the `src/*.c` files with your code.
 2) Open the libraries
 
-```c
+```cxx
 #include "lua-kv.h"
 
 void register_lua_modules (lua_State* L) {

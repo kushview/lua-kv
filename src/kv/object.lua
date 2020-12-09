@@ -1,4 +1,4 @@
---- A Generic object library
+--- Define objects with attributes.
 -- @module kv.object
 -- @usage
 -- local Animal = object()
@@ -104,10 +104,10 @@ end
 -- local Cat = object (Animal)
 M.define = define_type
 
---- Create a new instance `T`.
+--- Create a new instance of type `T`.
 -- @tparam table T The object type to create
--- @tparam any ... Arguments passed to `Object:init`
--- @treturn table The newly created object `T`
+-- @tparam any ... Arguments passed to `T:init`
+-- @treturn table The newly created object
 function M.new (T, ...)
     return instantiate (T, ...)
 end

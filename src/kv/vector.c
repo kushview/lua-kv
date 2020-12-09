@@ -14,6 +14,8 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 */
 
+#if 0
+
 /// A vector of `kv_sample_t`'s suitable for realtime
 // @module kv.vector
 #include <stdlib.h>
@@ -33,13 +35,13 @@ typedef struct kv_vector_impl_t        Vector;
 
 //=============================================================================
 kv_vector_t* kv_vector_new (lua_State* L, int size) {
-    Vector* vec = lua_newuserdata (L, sizeof(Vector));
+    Vector* vec = lua_newuserdata (L, sizeof (Vector));
     luaL_setmetatable (L, LKV_MT_VECTOR);
 
     if (size > 0) {
         vec->size = vec->used = size;
-        vec->values = malloc (sizeof(kv_sample_t) * size);
-        memset (vec->values, 0, sizeof(kv_sample_t) * size);
+        vec->values = malloc (sizeof (kv_sample_t) * size);
+        memset (vec->values, 0, sizeof (kv_sample_t) * size);
     } else {
         vec->size = vec->used   = 0;
         vec->values = NULL;
@@ -199,8 +201,11 @@ void kv_vector_metatable (lua_State* L) {
     }
 }
 
-LKV_EXPORT int luaopen_kv_vector (lua_State* L) {
+LUAMOD_API 
+int luaopen_kv_vector (lua_State* L) {
     kv_vector_metatable (L);
     luaL_newlib (L, vector_f);
     return 1;
 }
+
+#endif

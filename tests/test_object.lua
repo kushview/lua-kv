@@ -1,5 +1,8 @@
 
+function test_object()
+
 local object = require ('kv.object')
+
 local Animal = object ({
     name = {
         get = function (self)
@@ -42,7 +45,7 @@ local obj = object.new (Animal)
 local dog = Dog()
 local lab = object.new (BlackLab)
 
-assert (obj.name == "Animal", "obj.name ~= " .. tostring(obj.name))
+luaunit.assertEquals (obj.name, "Animal")
 assert (rawget (obj, "name") == nil)
 assert (obj:size() == "varies")
 
@@ -61,3 +64,7 @@ local br = object.new (Bare)
 assert (br:get() == 100)
 br:set (200)
 assert (br:get() == 200)
+
+end
+
+return test_object
