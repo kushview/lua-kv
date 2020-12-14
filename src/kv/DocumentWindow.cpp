@@ -37,12 +37,11 @@ public:
     {
         if (auto* const comp = child.get<Component*> ("impl"))
         {
-            DBG ("setting content");
             setContentNonOwned (comp, true);
         }
         else
         {
-            DBG("failed to set widget");
+            // DBG("failed to set widget");
         }
     }
 
