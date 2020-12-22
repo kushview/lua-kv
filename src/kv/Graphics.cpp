@@ -16,7 +16,7 @@ int luaopen_kv_Graphics (lua_State* L) {
         /// Change the color
         // @function set_color
         // @int color New ARGB color as integer. e.g.`0xAARRGGBB`
-        "set_color", sol::overload (
+        "color", sol::overload (
             [](Graphics& g, int color) { g.setColour (Colour (color)); }
         ),
         
@@ -27,15 +27,18 @@ int luaopen_kv_Graphics (lua_State* L) {
         // @int y Vertical position
         // @int width Width of containing area
         // @int height Height of containing area
-        "draw_text", sol::overload (
+        "drawtext", sol::overload (
+            [](Graphics& g, const char* text, Rectangle<double> r) {
+                g.drawText (text, r.toFloat(), Justification::centred, true);
+            },
             [](Graphics& g, std::string t, int x, int y, int w, int h) {
                 g.drawText (t, x, y, w, h, Justification::centred, true);
             }
         ),
 
         /// Fill the entire drawing area.
-        // @function fill_all
-        "fill_all", sol::overload (
+        // @function Graphics:fillall
+        "fillall", sol::overload (
             [](Graphics& g)                 { g.fillAll(); },
             [](Graphics& g, int color)      { g.fillAll (Colour (color)); }
         )
