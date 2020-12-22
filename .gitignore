@@ -3,3 +3,4 @@
 .waf-*
 /build/
 /.vscode/
+src/kv/WidgetOld.lua
