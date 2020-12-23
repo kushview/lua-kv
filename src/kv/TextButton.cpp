@@ -1,5 +1,5 @@
 /// A JUCE Component userdata
-// @classmod kv.Component
+// @classmod kv.TextButton
 // @pragma nostrip
 
 #include "kv/lua/object.hpp"
@@ -22,16 +22,9 @@ public:
         removeListener (this);
     }
 
-    template<typename T>
-    static T* userdata (const sol::table& proxy) {
-        if (! proxy.valid())
-            return nullptr;
-        auto mt = proxy[sol::metatable_key];
-        return mt["__impl"].get_or<T*> (nullptr);
-    }
 
     static void init (const sol::table& proxy) {
-        if (auto* const impl = userdata<TextButton> (proxy))
+        if (auto* const impl = object_userdata<TextButton> (proxy))
             impl->widget = proxy;
     }
 
