@@ -6,13 +6,6 @@
 namespace kv {
 namespace lua {
 
-template<class Backing>
-class WidgetBacking : public Backing {
-public:
-    WidgetBacking() = default;
-    virtual ~WidgetBacking() = default;
-};
-
 template<typename WidgetType, typename ...Args>
 inline static sol::table
 new_widgettype (lua_State* L, const char* name, Args&& ...args) {
@@ -45,8 +38,8 @@ new_widgettype (lua_State* L, const char* name, Args&& ...args) {
         "right",                sol::readonly_property (&Widget::getRight),
         "bottom",               sol::readonly_property (&Widget::getBottom),
 
-        "screenx",             sol::readonly_property (&Widget::getScreenX),
-        "screeny",             sol::readonly_property (&Widget::getScreenY),
+        "screenx",              sol::readonly_property (&Widget::getScreenX),
+        "screeny",              sol::readonly_property (&Widget::getScreenY),
 
         "visible",              sol::property (&Widget::setVisible, &Widget::isVisible),
 
@@ -67,7 +60,6 @@ new_widgettype (lua_State* L, const char* name, Args&& ...args) {
         "tofront",              &Widget::toFront,
         "toback",               &Widget::toBack,
 
-        "add_to_desktop",     [](Widget& self) { self.addToDesktop (0); },
         "remove_from_desktop",  &Widget::removeFromDesktop,
         "is_on_desktop",        &Widget::isOnDesktop,
         
