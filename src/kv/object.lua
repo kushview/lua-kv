@@ -73,9 +73,11 @@ local function make_userdata_proxy (T, U, _impl)
 
         if props[k] then return impl[k] end
 
-        val = T ~= U and T[k] or nil;        if val then return val end
+        val = T ~= U and T[k] or nil;        
+        if val then return val end
         
-        val = exported[k]; if val then return val end
+        val = exported[k]; 
+        if val then return val end
 
         return nil
     end
@@ -217,6 +219,19 @@ M.define = define_type
 -- @treturn table The newly created object
 function M.new (T, ...)
     return instantiate (T, ...)
+end
+
+--- Reference some userdata.
+-- Only call this on userdata allocated outside of lua.
+-- @tparam table T The type of userdata
+-- @tparam userdata obj Instance allocated in C/C++
+-- @bool init Set false to skip calling T.init (default true)
+-- @return table Proxy object for `obj` 
+function M.ref (T, obj, init)
+    init = init ~= nil and init or true
+    if type (T)   ~= 'table'    then error ("param #1 is not a table") end
+    if type (obj) ~= 'userdata' then error ("param #2 is not userdata") end
+    return make_userdata_proxy (T, T, obj)
 end
 
 setmetatable (M, {
