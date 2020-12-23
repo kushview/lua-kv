@@ -2,6 +2,8 @@
 // @classmod kv.DocumentWindow
 // @pragma nostrip
 
+#include "kv/lua/object.hpp"
+#include "kv/lua/widget.hpp"
 #include "lua-kv.hpp"
 #include LKV_JUCE_HEADER
 
@@ -12,19 +14,29 @@ using namespace juce;
 namespace kv {
 namespace lua {
 
-class DocumentWindowImpl : public DocumentWindow
+class DocumentWindow : public juce::DocumentWindow
 {
 public:
-    ~DocumentWindowImpl()
+    DocumentWindow (const sol::table&)
+        : juce::DocumentWindow ("", Colours::black, DocumentWindow::allButtons, true)
+    { }
+
+    ~DocumentWindow() override
     {
         widget = sol::lua_nil;
     }
 
-    static DocumentWindowImpl* create (sol::table tbl)
+    static void init (const sol::table& proxy) {
+        if (auto* const impl = object_userdata<DocumentWindow> (proxy)) {
+            impl->widget = proxy;
+            impl->setUsingNativeTitleBar (true);
+            impl->setResizable (true, false);
+        }
+    }
+
+    void resized() override
     {
-        auto* wrapper = new DocumentWindowImpl();
-        wrapper->widget = tbl;
-        return wrapper;
+        juce::DocumentWindow::resized();
     }
 
     void closeButtonPressed() override
@@ -33,10 +45,11 @@ public:
             f (widget);
     }
 
-    void set_widget (sol::table child)
+    void setContent (const sol::table& child)
     {
-        if (auto* const comp = child.get<Component*> ("impl"))
+        if (Component* const comp = object_userdata<Component> (child))
         {
+            content = child;
             setContentNonOwned (comp, true);
         }
         else
@@ -45,46 +58,40 @@ public:
         }
     }
 
-private:
-    explicit DocumentWindowImpl (const String& name = "Window")
-        : DocumentWindow (name, Colours::darkgrey, DocumentWindow::allButtons, false)
-    {
-        setUsingNativeTitleBar (true);
-        setResizable (true, false);
-    }
+    sol::table getContent() const { return content; }
 
+private:
     sol::table widget;
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DocumentWindowImpl)
+    sol::table content;
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DocumentWindow)
 };
 
 }}
 
 LUAMOD_API
 int luaopen_kv_DocumentWindow (lua_State* L) {
-    using kv::lua::DocumentWindowImpl;
-    sol::state_view lua (L);
-    auto t = lua.create_table();
-    t.new_usertype<DocumentWindowImpl> (LKV_TYPE_NAME_WINDOW, sol::no_constructor,
-        sol::call_constructor,  sol::factories (DocumentWindowImpl::create),
-        sol::meta_method::to_string, [](DocumentWindowImpl& self) {
+    using kv::lua::DocumentWindow;
+
+    auto T = kv::lua::new_widgettype<DocumentWindow> (L, LKV_TYPE_NAME_WINDOW,
+        sol::meta_method::to_string, [](DocumentWindow& self) {
             return kv::lua::to_string (self, LKV_TYPE_NAME_WINDOW);
         },
-        "get_name",             [](DocumentWindowImpl& self) { return self.getName().toStdString(); },
-        "set_name",             [](DocumentWindowImpl& self, const char* name) { self.setName (name); },
-        "set_size",             &DocumentWindowImpl::setSize,
-        "set_visible",          &DocumentWindowImpl::setVisible,
-        "repaint",              [](DocumentWindowImpl& self) { self.repaint(); },
-        "is_visible",           &DocumentWindowImpl::isVisible,
-        "get_width",            &DocumentWindowImpl::getWidth,
-        "get_height",           &DocumentWindowImpl::getHeight,
-        "add_to_desktop",       [](DocumentWindowImpl& self) { self.addToDesktop(); },
-        "remove_from_desktop",  &DocumentWindowImpl::removeFromDesktop,
-        "is_on_desktop",        &DocumentWindowImpl::isOnDesktop,
-        "set_content_owned",    &DocumentWindowImpl::setContentOwned,
-        "set_widget",           &DocumentWindowImpl::set_widget,
-        sol::base_classes,      sol::bases<juce::DocumentWindow, juce::Component, juce::MouseListener>()
+        "add_to_desktop",   [](DocumentWindow& self) { self.addToDesktop(); },
+        "set_content",      &DocumentWindow::setContent,
+        "get_content",      &DocumentWindow::getContent,
+        "content", sol::property (&DocumentWindow::getContent, &DocumentWindow::setContent),
+        
+        sol::base_classes, sol::bases<juce::DocumentWindow,
+                                      juce::ResizableWindow,
+                                      juce::TopLevelWindow,
+                                      juce::Component,
+                                      juce::MouseListener>()
     );
 
-    sol::stack::push (L, kv::lua::remove_and_clear (t, LKV_TYPE_NAME_WINDOW));
+    auto T_mt = T[sol::metatable_key];
+    ((sol::table) T_mt["__props"]).add ("content");
+    ((sol::table) T_mt["__methods"]).add ("get_content", "set_content");
+
+    sol::stack::push (L, T);
     return 1;
 }
