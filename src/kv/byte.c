@@ -22,6 +22,14 @@ PERFORMANCE OF THIS SOFTWARE.
 #include <stdint.h>
 #include "packed.h"
 
+/// Pack 4 bytes in a 64bit integer.
+// Undefined params are treated as zero
+// @function pack
+// @int b1 First byte
+// @int b2 Second byte
+// @int b3 Third byte
+// @int b4 Fourth byte
+// @treturn int Packed integer
 static int f_pack (lua_State* L) {
     kv_packed_t msg = { .packed = 0x0 };
 

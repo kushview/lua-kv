@@ -1,3 +1,5 @@
+/// A rectangle
+// @classmod kv.Rectanglessss
 
 #pragma once
 
@@ -21,8 +23,11 @@ new_juce_rectangle (lua_State* L, const char* name, Args&& ...args) {
             [](T w, T h) { return R (w, h); },
             [](juce::Point<T> p1, juce::Point<T> p2) { return R (p1, p2); }
         ),
+
+        /// @function Rectangle.from_coords
         "from_coords",      R::leftTopRightBottom,
 
+        /// @field Rectangle.x
         "x",                sol::property (&R::getX, &R::setX),
         "y",                sol::property (&R::getY, &R::setY),
 
@@ -60,9 +65,9 @@ new_juce_rectangle (lua_State* L, const char* name, Args&& ...args) {
         "slice_right",      &R::removeFromRight,
         "slice_bottom",     &R::removeFromBottom,
 
-        "to_integer",       &R::toNearestInt,
-        "to_edges",         &R::toNearestIntEdges,
-        "to_number",        &R::toDouble,
+        "tointeger",        &R::toNearestInt,
+        "toedges",          &R::toNearestIntEdges,
+        "tonumber",         &R::toDouble,
         std::forward<Args> (args)...
 #if 0        
         "getAspectRatio", sol::overload (

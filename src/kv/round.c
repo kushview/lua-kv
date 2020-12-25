@@ -16,7 +16,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /// MIDI utilities.
 // @author Michael Fisher
-// @module kv.float
+// @module kv.round
 
 #include "lua-kv.h"
 #include <lualib.h>
@@ -24,7 +24,7 @@ PERFORMANCE OF THIS SOFTWARE.
 static int f_float (lua_State* L) {
     if (lua_gettop (L) <= 0) {
         lua_pushnumber (L, 0.0);
-        return 0;
+        return 1;
     }
 
     switch (lua_type (L, 1)) {
@@ -43,13 +43,16 @@ static int f_float (lua_State* L) {
         default:
             lua_pushnumber (L, 0.0);
             break;
-
     }
 
     return 1;
 }
 
 static const luaL_Reg funcs[] = {
+    /// Round a number to 32bit precision
+    // @function float
+    // @number input Number to round
+    // @treturn number Rounded value
     { "float",  f_float },
     { NULL, NULL }
 };

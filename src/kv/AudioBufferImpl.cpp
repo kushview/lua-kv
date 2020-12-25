@@ -321,6 +321,18 @@ static int audio_new (lua_State* L) {
     return 1;
 }
 
+/// Create a 32bit float buffer
+// @function AudioBuffer.Float
+// @param ... Params sent to ctor
+// @return kv.AudioBuffer32
+// @within Constructors
+
+/// Create a 64but double buffer
+// @function AudioBuffer.Double
+// @param ... Params sent to ctor
+// @return kv.AudioBuffer64
+// @within Constructors
+
 //==============================================================================
 static const luaL_Reg buffer_methods[] = {
     { "__gc",           audio_free },
