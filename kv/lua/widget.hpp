@@ -111,4 +111,11 @@ new_widgettype (lua_State* L, const char* name, Args&& ...args) {
     return T;
 }
 
+template<typename SliderType, typename ...Args>
+inline static sol::table
+new_slidertype (lua_State* L, const char* name, Args&& ...args) {
+    return new_widgettype<SliderType> (name,
+    std::forward<Args> (args)...);
+}
+
 }}
