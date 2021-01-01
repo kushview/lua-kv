@@ -14,8 +14,11 @@ public:
 };
 
 template<typename T> static
-T* object_userdata (const sol::table& proxy) {
-    auto mt = proxy[sol::metatable_key];
+T* object_userdata (const sol::table& proxy)
+{
+    if (! proxy.valid())
+        return nullptr;
+    auto mt = proxy [sol::metatable_key];
     return mt["__impl"].get_or<T*> (nullptr);
 }
 
