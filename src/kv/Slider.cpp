@@ -1,4 +1,5 @@
-/// Slider widget
+/// Slider widget.
+// Is a @{kv.Widget}
 // @classmod kv.Slider
 // @pragma nostrip
 
@@ -13,7 +14,7 @@ namespace lua {
 class Slider : public juce::Slider
 {
 public:
-    Slider (const sol::table&) 
+    Slider (const sol::table&)
         : juce::Slider() {}
     ~Slider() {}
 
@@ -28,9 +29,14 @@ public:
 
     void initialize()
     {
+        /// Handlers.
+        // @section handlers
+
+        /// Value changed.
+        // @tfield function Slider.valuechanged
         onValueChange = [this]()
         {
-            if (sol::function f = proxy ["changed"])
+            if (sol::function f = proxy ["valuechanged"])
             {
                 auto r = f (proxy);
                 if (! r.valid())
@@ -41,12 +47,16 @@ public:
             }
         };
 
+        /// Started to drag.
+        // @tfield function Slider.dragstart
         onDragStart = [this]() {
             if (sol::function f = proxy ["dragstart"]) {
                 f (proxy);
             }
         };
 
+        /// Stopped dragging.
+        // @tfield function Slider.dragend
         onDragEnd = [this]() {
             if (sol::function f = proxy ["dragend"]) {
                 f (proxy);
@@ -68,21 +78,6 @@ int luaopen_kv_Slider (lua_State* L) {
         sol::meta_method::to_string, [](Slider& self) {
             return kv::lua::to_string (self, LKV_TYPE_NAME_SLIDER);
         },
-
-        /// Handlers.
-        // @section handlers
-
-        /// Value changed.
-        // @tfield function Slider.changed
-        // "changed", &Slider::onValueChange,
-
-        /// Value changed.
-        // @tfield function Slider.changed
-        // "dragstart", &Slider::onDragStart,
-
-        /// Value changed.
-        // @tfield function Slider.dragend
-        // "dragend", &Slider::onDragEnd,
 
         /// Attributes.
         // @section attributes
@@ -130,9 +125,9 @@ int luaopen_kv_Slider (lua_State* L) {
 
         /// Set the range.
         // @function Slider:range
-        // @tparam kv.Range range   Range to set
-        // @number interval         Step-size
-        // @return kv.Range         The current range
+        // @tparam kv.Range range Range to set
+        // @number interval Step-size
+        // @return kv.Range The current range
         "range", sol::overload (
             [](Slider& self) {
                 return self.getRange();
@@ -169,10 +164,10 @@ int luaopen_kv_Slider (lua_State* L) {
 
         /// Change TextBox position.
         // @function Slider:textboxstyle
-        // @int pos     Text box position
-        // @bool ro     Text box is read only
-        // @int width   Text box width
-        // @int height  Text box height
+        // @int pos Text box position
+        // @bool ro Text box is read only
+        // @int width Text box width
+        // @int height Text box height
         "textboxstyle", &Slider::setTextBoxStyle,
 
         sol::base_classes, sol::bases<juce::Component>()
@@ -274,7 +269,6 @@ int luaopen_kv_Slider (lua_State* L) {
 
     sol::table T_mt = T[sol::metatable_key];
     T_mt["__props"].get_or_create<sol::table>().add (
-        // "changed", "dragstart", "dragend",
         "min", "max", "interval", "style"
     );
     T_mt["__methods"].get_or_create<sol::table>().add (

@@ -1,5 +1,6 @@
-/// A JUCE Component userdata
-// @classmod kv.Component
+/// A GUI Widget.
+// Is defined with @{kv.object} and can be inherrited. Backed by a JUCE Component.
+// @classmod kv.Widget
 // @pragma nostrip
 
 #include "kv/lua/widget.hpp"
@@ -10,7 +11,7 @@ using namespace juce;
 namespace kv {
 namespace lua {
 
-class Widget : public juce::Component //public WidgetBacking<Component>
+class Widget : public juce::Component
 {
 public:
     ~Widget()
@@ -114,11 +115,24 @@ int luaopen_kv_Widget (lua_State* L) {
             return kv::lua::to_string (self, LKV_TYPE_NAME_WIDGET);
         },
         "add", sol::overload (&Widget::add, &Widget::addWithZ),
+        "addtodesktop", sol::overload (
+            [](Widget& self, int flags) { 
+                self.addToDesktop(flags, nullptr); 
+            },
+            [](Widget& self, int flags, void* handle) { 
+                self.addToDesktop (flags, handle); 
+            }
+        ),
         sol::base_classes,      sol::bases<Component>()
     );
 
     sol::table T_mt = T [sol::metatable_key];
     T_mt["__methods"].get_or_create<sol::table>().add (
+        /// Add a child widget.
+        // @function Widget:add
+        // @tparam kv.Widget widget Widget to add
+        // @int[opt] zorder Z-order
+        // @within Methods
         "add"
     );
 

@@ -1,6 +1,6 @@
 /// Bounding box
 // The value type for this is a 32bit integer and Backed by a juce::Rectangle.
-// API is identical to kv.Rectangle.
+// API is identical to @{kv.Rectangle}.
 // @classmod kv.Bounds
 // @pragma nostrip
 

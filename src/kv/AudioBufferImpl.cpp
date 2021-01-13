@@ -1,6 +1,5 @@
 /// An audio sample buffer
 // @classmod kv.AudioBuffer
-// @pragma nostrip
 
 #if LKV_AUDIO_BUFFER_COMPILE
 
@@ -28,7 +27,7 @@ using Buffer        = juce::AudioBuffer<SampleType>;
 
 #define toclassref(L, n) *(Buffer**) lua_touserdata (L, n);
 
-static int audio_is_float (lua_State* L) {
+static int audio_isfloat (lua_State* L) {
    #if LKV_AUDIO_BUFFER_32
     lua_pushboolean (L, true);
    #else
@@ -37,7 +36,7 @@ static int audio_is_float (lua_State* L) {
     return 1;
 }
 
-static int audio_is_double (lua_State* L) {
+static int audio_isdouble (lua_State* L) {
    #if LKV_AUDIO_BUFFER_32
     lua_pushboolean (L, false);
    #else
@@ -173,12 +172,12 @@ static int audio_set (lua_State* L) {
 
 /// Apply gain to all channels and samples
 // @number gain Gain to apply to all channels
-// @function AudioBuffer:apply_gain
+// @function AudioBuffer:applygain
 
 /// Apply gain to a single channel
 // @int channel Channel to apply gain to
 // @number gain Gain to apply to a channel
-// @function AudioBuffer:apply_gain
+// @function AudioBuffer:applygain
 
 /// Applies a gain multiple to a region of all the channels.
 // For speed, this doesn't check whether the sample numbers
@@ -186,15 +185,15 @@ static int audio_set (lua_State* L) {
 // @int start Sample index to start at
 // @int count Number of samples to process
 // @number gain Amount of gain to apply
-// @function AudioBuffer:apply_gain
+// @function AudioBuffer:applygain
 
 /// Apply gain to a single channel with range
 // @int channel Channel to apply gain to
 // @int start Sample index to start at
 // @int count Number of samples to process
 // @number gain Amount of gain to apply
-// @function AudioBuffer:apply_gain
-static int audio_apply_gain (lua_State* L) {
+// @function AudioBuffer:applygain
+static int audio_applygain (lua_State* L) {
     Buffer* buf = toclassref (L, 1);
     switch (lua_gettop (L)) {
         case 2: {
@@ -292,18 +291,16 @@ static int audio_tostring (lua_State* L) {
 // @return An empty buffer.
 // @within Constructors
 // @usage
-// local AudioBuffer = require ('kv.AudioBuffer')
 // local buf = AudioBuffer() -- __call constructor
 // -- do someting with `buf`
 
 /// Creates a new audio buffer with the specified channel and sample counts
-// @param nchannels Number of channels
-// @param nframes Number of samples in each channel
+// @int nchannels Number of channels
+// @int nframes Number of samples in each channel
 // @function AudioBuffer.__call
 // @return Newly created audio buffer
 // @within Constructors
 // @usage
-// local AudioBuffer = require ('kv.AudioBuffer')
 // -- 2 channels, 2048 samples
 // local buf = AudioBuffer (2, 2048) -- __call constructor
 // -- do someting with `buf`
@@ -321,32 +318,20 @@ static int audio_new (lua_State* L) {
     return 1;
 }
 
-/// Create a 32bit float buffer
-// @function AudioBuffer.Float
-// @param ... Params sent to ctor
-// @return kv.AudioBuffer32
-// @within Constructors
-
-/// Create a 64but double buffer
-// @function AudioBuffer.Double
-// @param ... Params sent to ctor
-// @return kv.AudioBuffer64
-// @within Constructors
-
 //==============================================================================
 static const luaL_Reg buffer_methods[] = {
     { "__gc",           audio_free },
     { "__tostring",     audio_tostring },
     { "free",           audio_free },
-    { "is_float",       audio_is_float },
-    { "is_double",      audio_is_double },
+    { "isfloat",        audio_isfloat },
+    { "isdouble",       audio_isdouble },
     { "channels",       audio_channels },
     { "length",         audio_length },
     { "clear",          audio_clear },
     { "cleared",        audio_cleared },
     { "get",            audio_get },
     { "set",            audio_set },
-    { "apply_gain",     audio_apply_gain },
+    { "applygain",      audio_applygain },
     { "fade",           audio_fade },
     { NULL, NULL }
 };

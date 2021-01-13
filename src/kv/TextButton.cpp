@@ -1,4 +1,5 @@
-/// A JUCE Component userdata
+/// A Text Button.
+// Is a @{kv.Widget}.
 // @classmod kv.TextButton
 // @pragma nostrip
 
@@ -22,14 +23,16 @@ public:
         removeListener (this);
     }
 
-
     static void init (const sol::table& proxy) {
         if (auto* const impl = object_userdata<TextButton> (proxy))
             impl->widget = proxy;
     }
 
+    /// On clicked handler.
+    // Executed when the button is clicked by the user.
+    // @function TextButton:clicked
     void buttonClicked (Button*) override {
-        if (sol::function f = widget ["onclick"])
+        if (sol::function f = widget ["clicked"])
             f (widget);
     }
 
@@ -62,7 +65,14 @@ int luaopen_kv_TextButton (lua_State* L) {
 
     auto T_mt = T[sol::metatable_key];
     sol::table __props = T_mt["__props"];
-    __props.add ("text");
+
+    /// Attributes.
+    // @section attributes
+    __props.add (
+        /// Displayed text.
+        // @tfield string TextButton.text
+        "text"
+    );
 
     sol::stack::push (L, T);
     return 1;

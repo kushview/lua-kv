@@ -68,17 +68,17 @@ static int f_noteon (lua_State* L) {
 
 /// Make a regular note off message
 // @function noteoff
-// @int channel     MIDI Channel
-// @int note        Note number
-// @return          MIDI message packed as Integer
+// @int channel MIDI Channel
+// @int note Note number
+// @return MIDI message packed as Integer
 // @within Messages
 
 /// Make a note off message with velocity
 // @function noteoff
-// @int channel     MIDI Channel
-// @int note        Note number
-// @int velocity    Note velocity
-// @return          MIDI message packed as Integer
+// @int channel MIDI Channel
+// @int note Note number
+// @int velocity Note velocity
+// @return MIDI message packed as Integer
 // @within Messages
 static int f_noteoff (lua_State* L) { 
     if (lua_gettop (L) == 2)

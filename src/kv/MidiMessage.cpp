@@ -1,3 +1,6 @@
+/// A MIDI Message.
+// @classmod kv.MidiMessage
+// @pragma nostrip
 
 #include "lua-kv.hpp"
 #include "packed.h"
@@ -216,80 +219,189 @@ static int midimessage_goto (lua_State* L) {
 }
 
 static const luaL_Reg midimessage_methods[] = {
-    { "__gc",               midimessage_free },
+    { "__gc",                   midimessage_free },
 
-    { "data",               midimessage_data },
-    { "description",        midimessage_description },
+    /// Methods.
+    // @section methods
 
-    { "time",               midimessage_time },
-    { "set_time",           midimessage_set_time },
-    { "addtime",            midimessage_add_time },
-    { "withtime",           midimessage_with_time },
+    /// Raw data.
+    // @function MidiMessage:data
+    { "data",                   midimessage_data },
 
-    { "channel",            midimessage_channel },
-    { "is_channel",         midimessage_is_channel },
-    { "set_channel",        midimessage_set_channel },
+    /// Message description.
+    // Human readable information about the message.
+    // @function MidiMessage:description
+    // @treturn string
+    { "description",            midimessage_description },
 
-    { "is_sysex",           midimessage_is_sysex },
-    { "sysex_data",         midimessage_sysex_data },
+    /// Timestamp.
+    // @function MidiMessage:time
+    // @treturn number Timestamp
+    { "time",                   midimessage_time },
 
-    { "is_note_on",         midimessage_is_note_on },
-    { "is_note_off",        midimessage_is_note_off },
-    { "is_note",            midimessage_is_note },
-    { "note",               midimessage_note },
-    { "set_note",           midimessage_set_note },
+    /// Change timestamp.
+    // @function MidiMessage:settime
+    // @number t Timestamp to set
+    { "settime",                midimessage_set_time },
 
-    { "velocity",           midimessage_velocity },
-    { "velocity_float",     midimessage_velocity_float },
-    { "set_velocity",       midimessage_set_velocity },
-    { "multiply_velocity",  midimessage_multiply_velocity },
+    /// Add to timestamp.
+    // @function MidiMessage:addtime
+    // @number dt Delta time to add
+    { "addtime",                midimessage_add_time },
 
-    { "is_program",         midimessage_is_program },
-    { "program",            midimessage_program },
+    /// Create copy with a new timestamp.
+    // @function MidiMessage:withtime
+    // @number t Timestamp to set
+    // @treturn kv.MidiMessage New midi message
+    { "withtime",               midimessage_with_time },
 
-    { "is_pitch",           midimessage_is_pitch },
-    { "pitch",              midimessage_pitch },
+    /// Midi Channel.
+    // @function MidiMessage:channel
+    // @treturn int 1-16 if valid channel
+    { "channel",                midimessage_channel },
 
-    { "is_aftertouch",      midimessage_is_aftertouch },
-    { "aftertouch",         midimessage_aftertouch },
+    /// Is a channel message.
+    // Returns true if the message has the given channel
+    // @function MidiMessage:ischannel
+    // @int ch Channel to check
+    // @treturn bool
+    { "ischannel",              midimessage_is_channel },
 
-    { "is_pressure",        midimessage_is_pressure },
-    { "pressure",           midimessage_pressure },
+    /// Set the channel.
+    // @function MidiMessage:setchannel
+    // @int ch Channel to set (1-16)
+    { "setchannel",             midimessage_set_channel },
 
-    { "is_controller",      midimessage_is_controller },
-    { "controller",         midimessage_controller },
-    { "controller_value",   midimessage_controller_value },
-    { "is_controller_type", midimessage_is_controller_type },
+    /// Is sysex.
+    // @function MidiMessage:issysex
+    // @return True if is sysex message
+    { "issysex",                midimessage_is_sysex },
+
+    /// Sysex Data.
+    // @function MidiMessage:sysexdata
+    // @return Raw sysex bytes
+    // @return Sysex data size
+    { "sysexdata",              midimessage_sysex_data },
+
+    /// Is note on.
+    // @function MidiMessage:isnoteon
+    // @return True if a note on message
+    { "isnoteon",               midimessage_is_note_on },
+
+    /// Is note off.
+    // @function MidiMessage:isnoteoff
+    // @return True if a note on message
+    { "isnoteoff",              midimessage_is_note_off },
+
+    /// Is note on or off.
+    // @function MidiMessage:isnote
+    // @return True if a note on message
+    { "isnote",                 midimessage_is_note },
+
+    /// Note number.
+    // @function MidiMessage:note
+    // @return The note number
+    { "note",                   midimessage_note },
+
+    /// Change note number.
+    // @function MidiMessage:setnote
+    // @int note New note number
+    { "setnote",                midimessage_set_note },
+
+    /// Velocity.
+    // @function MidiMessage:velocity
+    // @treturn int Velocity (0-127)
+    { "velocity",               midimessage_velocity },
+
+    /// Float velocity.
+    // @function MidiMessage:fvelocity
+    // @treturn number Velocity (0.0-1.0)
+    { "fvelocity",              midimessage_velocity_float },
+
+    /// Multiply Velocity.
+    // @function MidiMessage:xvelocity
+    // @number m Multiplier
+    { "xvelocity",              midimessage_multiply_velocity },
+
+    /// Change velocity.
+    // @function MidiMessage:setvelocity
+    // @number v New velocity (0.0-1.0)
+    { "setvelocity",            midimessage_set_velocity },
+
+    /// Is program change?
+    // @function MidiMessage:isprogram
+    // @return True if a program change message
+    { "isprogram",              midimessage_is_program },
+
+    /// Program number.
+    // @function MidiMessage:program
+    // @treturn int The program number
+    { "program",                midimessage_program },
+
+    /// Is pitch message.
+    // @function MidiMessage:ispitch
+    // @return True if a pitch message
+    { "ispitch",                midimessage_is_pitch },
+
+    /// Pitch.
+    // @function MidiMessage:pitch
+    // @treturn int Pitch
+    { "pitch",                  midimessage_pitch },
+
+    /// Is after touch message.
+    // @function MidiMessage:isaftertouch
+    // @return True if an after touch message
+    { "isaftertouch",           midimessage_is_aftertouch },
+
+    /// After touch.
+    // @function MidiMessage:aftertouch
+    // @treturn int After touch value
+    { "aftertouch",             midimessage_aftertouch },
+
+    /// Is pressure message.
+    // @function MidiMessage:ispressure
+    // @return True if an after touch message
+    { "ispressure",             midimessage_is_pressure },
+
+    /// Pressure.
+    // @function MidiMessage:pressure
+    // @treturn int Presure value
+    { "pressure",               midimessage_pressure },
+
+    { "iscontroller",           midimessage_is_controller },
+    { "controller",             midimessage_controller },
+    { "controller_value",       midimessage_controller_value },
+    { "is_controller_type",     midimessage_is_controller_type },
 
     { "is_notes_off",           midimessage_is_notes_off },
     { "is_sound_off",           midimessage_is_sound_off },
     { "is_reset_controllers",   midimessage_is_reset_controllers },
     
-    { "is_meta",                midimessage_is_meta },
-    { "meta_type",              midimessage_meta_type },
-    { "meta_data",              midimessage_meta_data },
-    { "meta_length",            midimessage_meta_length },
+    { "ismeta",                 midimessage_is_meta },
+    { "metatype",               midimessage_meta_type },
+    { "metadata",               midimessage_meta_data },
+    { "metalength",             midimessage_meta_length },
     
-    { "is_track",               midimessage_is_track },
-    { "is_end_of_track",        midimessage_is_end_of_track },
-    { "is_track_name",          midimessage_is_track_name },
+    { "istrack",                midimessage_is_track },
+    { "istrackend",             midimessage_is_end_of_track },
+    { "istrackname",            midimessage_is_track_name },
 
-    { "is_text",                midimessage_is_text },
+    { "istext",                 midimessage_is_text },
     { "text",                   midimessage_text },
 
-    { "is_tempo",               midimessage_is_tempo },
-    { "tempo_seconds_pqn",      midimessage_tempo_seconds_pqn },
-    { "tempo_ticks",            midimessage_tempo_ticks },
+    { "istempo",                midimessage_is_tempo },
+    { "tempospqn",              midimessage_tempo_seconds_pqn },
+    { "tempoticks",             midimessage_tempo_ticks },
 
-    { "is_active_sense",        midimessage_is_active_sense },
+    { "isactivesense",          midimessage_is_active_sense },
 
-    { "is_start",               midimessage_is_start },
-    { "is_stop",                midimessage_is_stop },
-    { "is_continue",            midimessage_is_continue },
-    { "is_clock",               midimessage_is_clock },
+    { "isstart",                midimessage_is_start },
+    { "isstop",                 midimessage_is_stop },
+    { "iscontinue",             midimessage_is_continue },
+    { "isclock",                midimessage_is_clock },
     
-    { "is_spp",                 midimessage_is_spp },
-    { "spp_beat",               midimessage_spp_beat },
+    { "isspp",                  midimessage_is_spp },
+    { "sppbeat",                midimessage_spp_beat },
 
     { "is_quarter_frame",       midimessage_is_quarter_frame },
     { "quarter_frame_seq",      midimessage_quarter_frame_seq },
@@ -323,5 +435,7 @@ int luaopen_kv_MidiMessage (lua_State* L) {
 
     lua_newtable (L);
     luaL_setmetatable (L, LKV_MT_MIDI_MESSAGE_TYPE);
+    lua_pushcfunction (L, midimessage_new);
+    lua_setfield (L, -2, "new");
     return 1;
 }

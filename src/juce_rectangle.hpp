@@ -1,5 +1,6 @@
-/// A rectangle
-// @classmod kv.Rectanglessss
+/// A rectangle.
+// Easy to use Rectangle object backed by JUCE Rectangle.
+// @classmod kv.Rectangle
 
 #pragma once
 
@@ -23,50 +24,157 @@ new_juce_rectangle (lua_State* L, const char* name, Args&& ...args) {
             [](T w, T h) { return R (w, h); },
             [](juce::Point<T> p1, juce::Point<T> p2) { return R (p1, p2); }
         ),
+        
+        /// Class Methods.
+        // @section classmethods
+        
+        /// @function Rectangle.fromcoords
+        // @int x1 Left
+        // @int y1 Top
+        // @int x2 Right
+        // @int y2 Bottom
+        // @treturn kv.Rectangle New rectangle
+        "fromcoords",      R::leftTopRightBottom,
 
-        /// @function Rectangle.from_coords
-        "from_coords",      R::leftTopRightBottom,
+        /// Attributes.
+        // @section attributes
 
         /// @field Rectangle.x
         "x",                sol::property (&R::getX, &R::setX),
+
+        /// @field Rectangle.y
         "y",                sol::property (&R::getY, &R::setY),
 
+        /// @field Rectangle.center
         "center",           sol::readonly_property (&R::getCentre),
-        "center_x",         sol::readonly_property (&R::getCentreX),
-        "center_y",         sol::readonly_property (&R::getCentreY),
 
+        /// @field Rectangle.centerx
+        "centerx",          sol::readonly_property (&R::getCentreX),
+
+        /// @field Rectangle.centery
+        "centery",          sol::readonly_property (&R::getCentreY),
+
+        /// @field Rectangle.width
         "width",            sol::property (&R::getWidth, &R::setWidth),
+
+        /// @field Rectangle.height
         "height",           sol::property (&R::getHeight, &R::setHeight),
 
+        /// @field Rectangle.left
         "left",             sol::property (&R::getX, &R::setLeft),
-        "right",            sol::property (&R::getRight, &R::setRight),
-        "top",              sol::property (&R::getY, &R::setTop),
-        "bottom",           sol::property (&R::getBottom, &R::setBottom),
 
-        "is_empty",         &R::isEmpty,
-        "is_finite",        &R::isFinite,
+        /// @field Rectangle.right
+        "right",            sol::property (&R::getRight, &R::setRight),
+
+        /// @field Rectangle.top
+        "top",              sol::property (&R::getY, &R::setTop),
+
+        /// @field Rectangle.bottom
+        "bottom",           sol::property (&R::getBottom, &R::setBottom),
+        
+        /// Methods.
+        // @section methods
+
+        /// Is empty.
+        // @function Rectangle:isempty
+        // @return True if a 0,0,0,0 rectangle
+        "isempty",         &R::isEmpty,
+
+        /// Is finite.
+        // @function Rectangle:isfinite
+        // @return True if finite
+        "isfinite",        &R::isFinite,
+
+        /// Translate the rectangle.
+        // @function Rectangle:translate
+        // @param dx
+        // @param dy
         "translate",        &R::translate,
+
+        /// Returns a translated retctangle.
+        // @function Rectangle:translated
+        // @param dx
+        // @param dy
+        // @return A translated rectangle
         "translated",       &R::translated,
 
+        /// Expand the rectangle in size.
+        // @function Rectangle:expand
+        // @param dx
+        // @param dy
         "expand",           &R::expand,
+        
+        
         "expanded", sol::overload (
+            /// Returns expanded rectangle.
+            // @function Rectangle:expanded
+            // @param dx
+            // @param dy
             [](R& self, T dx, T dy) { return self.expanded (dx, dy); },
+
+            /// Returns expanded rectangle.
+            // @function Rectangle:expanded
+            // @param dxy Delta X and Y
             [](R& self, T d)        { return self.expanded (d); }
         ),
         
+        /// Reduce the rectangle in size.
+        // @function Rectangle:translate
+        // @param dx
+        // @param dy
         "reduce",               &R::reduce,
+
+        
         "reduced", sol::overload (
+            /// Returns reduced rectangle.
+            // @function Rectangle:reduced
+            // @param dx
+            // @param dy
             [](R& self, T dx, T dy) { return self.reduced (dx, dy); },
+
+            /// Returns reduced rectangle.
+            // @function Rectangle:reduced
+            // @param dxy Delta X and Y
             [](R& self, T d)        { return self.reduced (d); }
         ),
 
-        "slice_top",        &R::removeFromTop,
-        "slice_left",       &R::removeFromLeft,
-        "slice_right",      &R::removeFromRight,
-        "slice_bottom",     &R::removeFromBottom,
+        /// Slice top.
+        // Remomve and return a portion of this rectangle.
+        // @function Rectangle:slicetop
+        // @param amt Amount to remove
+        "slicetop",        &R::removeFromTop,
 
+        /// Slice left.
+        // Remomve and return a portion of this rectangle.
+        // @function Rectangle:sliceleft
+        // @param amt Amount to remove
+        "sliceleft",       &R::removeFromLeft,
+
+        /// Slice right.
+        // Remomve and return a portion of this rectangle.
+        // @function Rectangle:sliceright
+        // @param amt Amount to remove
+        "sliceright",      &R::removeFromRight,
+
+        /// Slice bottom.
+        // Remomve and return a portion of this rectangle.
+        // @function Rectangle:slicebottom
+        // @param amt Amount to remove
+        "slicebottom",     &R::removeFromBottom,
+
+        /// Convert to integer.
+        // @function Rectangle:tointeger
+        // @return Converted rectangle
         "tointeger",        &R::toNearestInt,
+
+        /// Convert to rounded integer.
+        // @function Rectangle:toedges
+        // @return Converted rectangle
         "toedges",          &R::toNearestIntEdges,
+
+        /// Convert to number.
+        // @function Rectangle:tointeger
+        // @return Converted rectangle
         "tonumber",         &R::toDouble,
         std::forward<Args> (args)...
 #if 0        

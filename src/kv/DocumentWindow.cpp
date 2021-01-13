@@ -1,4 +1,6 @@
-/// A JUCE DocumentWindow usertype
+/// A Document Window.
+// A window with a title bar and optional buttons. Is a @{kv.Widget}
+// Backed by a JUCE DocumentWindow
 // @classmod kv.DocumentWindow
 // @pragma nostrip
 
@@ -39,22 +41,43 @@ public:
         juce::DocumentWindow::resized();
     }
 
+    /// Close button pressed.
+    // Called when the title bar close button is pressed.
+    // @function DocumentWindow:closepressed
+    // @within Handlers
     void closeButtonPressed() override
     {
-        if (sol::safe_function f = widget ["onclosebutton"])
+        if (sol::safe_function f = widget ["closepressed"])
             f (widget);
     }
 
-    void setContent (const sol::table& child)
+    void setContent (const sol::object& child)
     {
-        if (Component* const comp = object_userdata<Component> (child))
+        switch (child.get_type())
         {
-            content = child;
-            setContentNonOwned (comp, true);
-        }
-        else
-        {
-            // DBG("failed to set widget");
+            case sol::type::table:
+            {
+                if (Component* const comp = object_userdata<Component> (child))
+                {
+                    content = child;
+                    setContentNonOwned (comp, true);
+                }
+                else
+                {
+                    // DBG("failed to set widget");
+                }
+                break;
+            }
+            
+            case sol::type::nil:
+            {
+                clearContentComponent();
+                content = sol::lua_nil;
+                break;
+            }
+
+            default:
+                break;
         }
     }
 
@@ -76,10 +99,11 @@ int luaopen_kv_DocumentWindow (lua_State* L) {
         sol::meta_method::to_string, [](DocumentWindow& self) {
             return kv::lua::to_string (self, LKV_TYPE_NAME_WINDOW);
         },
-        "add_to_desktop",   [](DocumentWindow& self) { self.addToDesktop(); },
-        "set_content",      &DocumentWindow::setContent,
-        "get_content",      &DocumentWindow::getContent,
-        "content", sol::property (&DocumentWindow::getContent, &DocumentWindow::setContent),
+        "addtodesktop",   [](DocumentWindow& self) { self.addToDesktop(); },
+        "setcontent",      &DocumentWindow::setContent,
+        "getcontent",      &DocumentWindow::getContent,
+        "content", sol::property (&DocumentWindow::getContent, 
+                                  &DocumentWindow::setContent),
         
         sol::base_classes, sol::bases<juce::DocumentWindow,
                                       juce::ResizableWindow,
@@ -89,8 +113,23 @@ int luaopen_kv_DocumentWindow (lua_State* L) {
     );
 
     auto T_mt = T[sol::metatable_key];
-    ((sol::table) T_mt["__props"]).add ("content");
-    ((sol::table) T_mt["__methods"]).add ("get_content", "set_content");
+
+    /// Attributes.
+    // @section attributes
+    ((sol::table) T_mt["__props"]).add (
+        /// Displayed content.
+        // Assign to the widget you wish to display. Set to nil to clear the
+        // content.
+        // @tfield kv.Widget DocumentWindow.content
+        "content"
+    );
+    
+    /// Methods.
+    // @section methods
+    ((sol::table) T_mt["__methods"]).add (
+        "getcontent",
+        "setcontent"
+    );
 
     sol::stack::push (L, T);
     return 1;

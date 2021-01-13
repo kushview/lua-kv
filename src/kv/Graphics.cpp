@@ -13,20 +13,28 @@ int luaopen_kv_Graphics (lua_State* L) {
 
     auto M = lua.create_table();
     M.new_usertype<Graphics> ("Graphics", sol::no_constructor,
-        /// Change the color
-        // @function set_color
+        /// Methods.
+        // @section methods
+
+        /// Change the color.
+        // @function Graphics:color
         // @int color New ARGB color as integer. e.g.`0xAARRGGBB`
         "color", sol::overload (
             [](Graphics& g, int color) { g.setColour (Colour (color)); }
         ),
         
-        /// Draw some text
-        // @function draw_text
+        /// Draw some text.
+        // @function Graphics:drawtext
+        // @string text Text to draw
+        // @tparam kv.Rectangle r
+
+        /// Draw some text.
+        // @function Graphics:drawtext
         // @string text Text to draw
         // @int x Horizontal position
         // @int y Vertical position
-        // @int width Width of containing area
-        // @int height Height of containing area
+        // @int w Width of containing area
+        // @int h Height of containing area
         "drawtext", sol::overload (
             [](Graphics& g, const char* text, Rectangle<double> r) {
                 g.drawText (text, r.toFloat(), Justification::centred, true);
@@ -37,6 +45,7 @@ int luaopen_kv_Graphics (lua_State* L) {
         ),
 
         /// Fill the entire drawing area.
+        // Fills the drawing area with the current color.
         // @function Graphics:fillall
         "fillall", sol::overload (
             [](Graphics& g)                 { g.fillAll(); },

@@ -18,7 +18,7 @@ int luaopen_kv_Rectangle (lua_State* L) {
             return kv::lua::to_string (self, LKV_TYPE_NAME_RECTANGLE);
         }
     );
-    
+
     sol::stack::push (L, M);
     return 1;
 }
