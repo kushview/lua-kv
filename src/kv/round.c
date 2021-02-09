@@ -36,7 +36,7 @@ static int f_float (lua_State* L) {
             break;
         case LUA_TSTRING: {
             size_t len = 0;
-            const char* str = lua_tolstring (L, 1, &len);
+            lua_tolstring (L, 1, &len);
             lua_pushnumber (L, len > 0 ? 1.0 : 0.0);
             break;
         }

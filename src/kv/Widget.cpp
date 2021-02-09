@@ -3,6 +3,7 @@
 // @classmod kv.Widget
 // @pragma nostrip
 
+#include "kv/lua/object.hpp"
 #include "kv/lua/widget.hpp"
 #define LKV_TYPE_NAME_WIDGET     "Widget"
 
@@ -58,10 +59,7 @@ public:
 
     template<typename T>
     static T* userdata (const sol::table& proxy) {
-        if (! proxy.valid())
-            return nullptr;
-        auto mt = proxy[sol::metatable_key];
-        return mt["__impl"].get_or<T*> (nullptr);
+        return object_userdata<T> (proxy);
     }
 
     sol::table addWithZ (const sol::object& child, int zorder)

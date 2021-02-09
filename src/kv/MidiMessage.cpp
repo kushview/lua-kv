@@ -86,6 +86,7 @@ midimessage_set_float (add_time, addToTimeStamp)
 static int midimessage_with_time (lua_State* L) {
     auto* msg = *(juce::MidiMessage**) lua_touserdata (L, 1);
     auto** ret = create_message (L);
+    (**ret) = (*msg);
     (**ret).setTimeStamp (lua_tonumber (L, 2));
     return 1;
 }
