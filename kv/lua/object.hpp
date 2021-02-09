@@ -24,8 +24,8 @@ T* object_userdata (const sol::table& proxy)
     try {
         if (mt["__impl"].get_type() == sol::type::userdata)
         {
-            sol::userdata ud = mt["__impl"];
-            result = (T*)ud.pointer();
+            sol::object ud = mt["__impl"];
+            result = ud.as<T*>();
         }
     } catch (const std::exception&) {}
     
