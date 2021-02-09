@@ -57,15 +57,10 @@ public:
             f (widget, ev);
     }
 
-    template<typename T>
-    static T* userdata (const sol::table& proxy) {
-        return object_userdata<T> (proxy);
-    }
-
     sol::table addWithZ (const sol::object& child, int zorder)
     {
         jassert (child.valid());
-        if (Component* const impl = userdata<Component> (child))
+        if (Component* const impl = object_userdata<Component> (child))
         {
             addAndMakeVisible (*impl, zorder);
         }
@@ -79,7 +74,7 @@ public:
     }
     
     static void init (const sol::table& proxy) {
-        if (auto* const impl = userdata<Widget> (proxy)) {
+        if (auto* const impl = object_userdata<Widget> (proxy)) {
             impl->widget = proxy;
         }
     }
