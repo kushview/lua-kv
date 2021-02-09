@@ -17,8 +17,10 @@ static auto create_message (lua_State* L) {
 
 static int midimessage_new (lua_State* L) {
     auto** msg = create_message (L);
-    if (lua_gettop (L) > 1 && lua_isinteger (L, 2)) {
-        kv_packed_t pack = { .packed = lua_tointeger (L, 2) };
+    if (lua_gettop(L) > 1 && lua_isinteger(L, 2)) {
+        kv_packed_t pack;
+        pack.packed = lua_tointeger (L, 2);
+
         **msg = juce::MidiMessage (pack.data[0], pack.data[1], pack.data[2]);
     }
     return 1;

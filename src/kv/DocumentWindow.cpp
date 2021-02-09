@@ -116,7 +116,8 @@ int luaopen_kv_DocumentWindow (lua_State* L) {
 
     /// Attributes.
     // @section attributes
-    ((sol::table) T_mt["__props"]).add (
+    sol::table props = T_mt["__props"];
+    props.add (
         /// Displayed content.
         // Assign to the widget you wish to display. Set to nil to clear the
         // content.
@@ -126,7 +127,8 @@ int luaopen_kv_DocumentWindow (lua_State* L) {
     
     /// Methods.
     // @section methods
-    ((sol::table) T_mt["__methods"]).add (
+    sol::table methods = T_mt["__methods"];
+    methods.add (
         "getcontent",
         "setcontent"
     );
