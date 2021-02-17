@@ -87,10 +87,15 @@ static int f_noteoff (lua_State* L) {
 }
 
 static int f_tohertz (lua_State* L) {
+    lua_pushinteger (L, 0);
     return 0;
 }
 
 static int f_clamp (lua_State* L) {
+    lua_Integer value = lua_tointeger (L, 1);
+    if (value < 0) value = 0;
+    else if (value > 127) value = 127;
+    lua_pushinteger (L, value);
     return 0;
 }
 
@@ -98,6 +103,8 @@ static const luaL_Reg midi_f[] = {
     { "controller",     f_controller },
     { "noteon",         f_noteon },
     { "noteoff",        f_noteoff },
+    { "tohertz",        f_tohertz },
+    { "clamp",          f_clamp },
     { NULL, NULL }
 };
 
