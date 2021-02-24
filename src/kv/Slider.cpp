@@ -168,7 +168,10 @@ int luaopen_kv_Slider (lua_State* L) {
         // @bool ro Text box is read only
         // @int width Text box width
         // @int height Text box height
-        "textboxstyle", &Slider::setTextBoxStyle,
+        "textboxstyle", [](Slider& self, lua_Number position, bool readonly, lua_Number width, lua_Number height) {
+            const auto pos = static_cast<Slider::TextEntryBoxPosition> (jlimit (0, 4, roundToInt (position)));
+            self.setTextBoxStyle (pos, readonly, roundToInt (width), roundToInt (height));
+        },
 
         sol::base_classes, sol::bases<juce::Component>()
     );
