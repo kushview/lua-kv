@@ -76,21 +76,21 @@ static int audio_clear (lua_State* L) {
     
     switch (lua_gettop (L)) {
         case 2: {
-            buf->clear (lua_tointeger (L, 2), 0, 
+            buf->clear (static_cast<int> (lua_tointeger (L, 2)), 0, 
                         buf->getNumSamples());
             break;
         }
 
         case 3: {
-            buf->clear (lua_tointeger (L, 2), 
-                        lua_tointeger (L, 3));
+            buf->clear (static_cast<int> (lua_tointeger (L, 2)),
+                        static_cast<int> (lua_tointeger (L, 3)));
             break;
         }
         
         case 4: {
-            buf->clear (lua_tointeger (L, 2), 
-                        lua_tointeger (L, 3), 
-                        lua_tointeger (L, 4));
+            buf->clear (static_cast<int> (lua_tointeger (L, 2)),
+                        static_cast<int> (lua_tointeger (L, 3)),
+                        static_cast<int> (lua_tointeger (L, 4)));
             break;
         }
 
@@ -135,8 +135,9 @@ static int audio_get (lua_State* L) {
     //     const auto value = buf->getSample (lua_tointeger (L, 2) - 1, lua_tointeger (L, 3) - 1);
     //     DBG("GET: raw " << value << " - casted: " << static_cast<lua_Number> (value));
     //    #endif
-        lua_pushnumber (L, buf->getSample (lua_tointeger (L, 2) - 1, 
-                                           lua_tointeger (L, 3) - 1));
+        lua_pushnumber (L, buf->getSample (
+            static_cast<int> (lua_tointeger (L, 2)) - 1,
+            static_cast<int> (lua_tointeger (L, 3)) - 1));
     }
     return 1;
 }
@@ -158,8 +159,8 @@ static int audio_set (lua_State* L) {
         //             << " - " << lua_tonumber (L, 4));
        #endif
         buf->setSample (
-            lua_tointeger (L, 2) - 1,
-            lua_tointeger (L, 3) - 1,
+            static_cast<int> (lua_tointeger (L, 2)) - 1,
+            static_cast<int> (lua_tointeger (L, 3)) - 1,
             static_cast<SampleType> (lua_tonumber (L, 4))
         );
 
@@ -217,9 +218,9 @@ static int audio_applygain (lua_State* L) {
 
         case 5: {
             buf->applyGain (
-                lua_tointeger (L, 2) - 1,
-                lua_tointeger (L, 3) - 1,
-                lua_tointeger (L, 4),
+                static_cast<int> (lua_tointeger (L, 2)) - 1,
+                static_cast<int> (lua_tointeger (L, 3)) - 1,
+                static_cast<int> (lua_tointeger (L, 4)),
                 static_cast<SampleType> (lua_tonumber (L, 5)));
             break;
         }

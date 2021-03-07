@@ -66,7 +66,7 @@ static int midimessage_##f (lua_State* L) { \
 #define midimessage_set_int(f, m) \
 static int midimessage_##f (lua_State* L) { \
     auto* msg = *(juce::MidiMessage**) lua_touserdata (L, 1); \
-    msg->m (lua_tointeger (L, 2)); \
+    msg->m (static_cast<int> (lua_tointeger (L, 2))); \
     return 0; \
 }
 
@@ -95,7 +95,8 @@ midimessage_get_int (channel,       getChannel)
 midimessage_set_int (set_channel,   setChannel)
 static int midimessage_is_channel (lua_State* L) {
     auto* msg = *(juce::MidiMessage**) lua_touserdata (L, 1);
-    lua_pushboolean (L, msg->isForChannel (lua_tointeger (L, 2)));
+    lua_pushboolean (L, msg->isForChannel (
+        static_cast<int> (lua_tointeger (L, 2))));
     return 1;
 }
 
@@ -143,7 +144,7 @@ midimessage_get_int (controller_value, getControllerValue)
 static int midimessage_is_controller_type (lua_State* L) {
     auto* msg = *(juce::MidiMessage**) lua_touserdata (L, 1);
     lua_pushboolean (L, msg->isControllerOfType (
-        lua_tointeger (L, 2)
+        static_cast<int> (lua_tointeger (L, 2))
     ));
     return 1;
 }

@@ -110,14 +110,15 @@ static int midibuffer_addmessage (lua_State* L) {
     auto* impl = *(Impl**) lua_touserdata (L, 1);
     impl->buffer.addEvent (
         **(MidiMessage**) lua_touserdata (L, 2), 
-        lua_tointeger (L, 3));
+        static_cast<int> (lua_tointeger (L, 3)));
     return 0;
 }
 
 static int midibuffer_addevent (lua_State* L) {
     auto* impl = *(Impl**) lua_touserdata (L, 1);
     impl->buffer.addEvent ((juce::uint8*) lua_touserdata (L, 2),
-                            lua_tointeger (L, 3), lua_tointeger (L, 4));
+                            static_cast<int> (lua_tointeger (L, 3)),
+                            static_cast<int> (lua_tointeger (L, 4)));
     return 0;
 }
 
@@ -137,8 +138,8 @@ static int midibuffer_clear (lua_State* L) {
         }
 
         case 3: {
-            (*impl).buffer.clear (lua_tointeger (L, 2),
-                                  lua_tointeger (L, 3));
+            (*impl).buffer.clear (static_cast<int> (lua_tointeger (L, 2)),
+                                  static_cast<int> (lua_tointeger (L, 3)));
             break;
         }
     }
@@ -146,12 +147,14 @@ static int midibuffer_clear (lua_State* L) {
     return 0;
 }
 
+#if 0
 static int midibuffer_clear_range (lua_State* L) {
     auto* impl = *(Impl**) lua_touserdata (L, 1);
-    (*impl).buffer.clear (lua_tointeger (L, 2),
-                          lua_tointeger (L, 3));
+    (*impl).buffer.clear (static_cast<int> (lua_tointeger (L, 2)),
+                          static_cast<int> (lua_tointeger (L, 3)));
     return 0;
 }
+#endif
 
 static int midibuffer_size (lua_State* L) {
     auto* impl = *(Impl**) lua_touserdata (L, 1);
@@ -164,9 +167,9 @@ static int midibuffer_addbuffer (lua_State* L) {
     if (lua_gettop (L) >= 5) {
         impl->buffer.addEvents (
             **(MidiBuffer**) lua_touserdata (L, 2),
-            lua_tointeger (L, 3),
-            lua_tointeger (L, 4),
-            lua_tointeger (L, 5));
+            static_cast<int> (lua_tointeger (L, 3)),
+            static_cast<int> (lua_tointeger (L, 4)),
+            static_cast<int> (lua_tointeger (L, 5)));
     } else {
         lua_error (L);
     }
@@ -178,7 +181,8 @@ static int midibuffer_insert(lua_State* L) {
     kv_packed_t pack;
     pack.packed = lua_tointeger (L, 2);
 
-    impl->buffer.addEvent ((uint8_t*) pack.data, 4, lua_tointeger (L, 3));
+    impl->buffer.addEvent ((uint8_t*) pack.data, 4,
+                           static_cast<int> (lua_tointeger (L, 3)));
     return 0;
 }
 
