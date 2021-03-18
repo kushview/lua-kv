@@ -29,8 +29,8 @@ def configure (conf):
     conf.check (lib='lua', uselib_store='LUA_LIB', mandatory=True)
     conf.check (header_name="sol/forward.hpp", uselib_store="SOL", mandatory=False)
 
-    conf.check_cfg (package='juce_debug-6' if conf.options.debug else 'juce-6', 
-                    uselib_store='JUCE', args=['--libs', '--cflags'], mandatory=False)
+    # conf.check_cfg (package='juce_debug-6' if conf.options.debug else 'juce-6', 
+    #                 uselib_store='JUCE', args=['--libs', '--cflags'], mandatory=False)
     
     conf.env.append_unique ('CXXFLAGS', ['-std=c++17'])
 
@@ -164,5 +164,5 @@ def build (bld):
             tests.linkflags.append ('-ldl')
 
 def check (ctx):
-    if 0 != call (["./test"]):
+    if 0 != call (["lua", "./test/run.lua"]):
         ctx.fatal ("Tests failed")
