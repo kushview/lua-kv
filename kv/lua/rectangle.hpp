@@ -12,7 +12,7 @@ namespace lua {
 
 template<typename T, typename ...Args>
 inline static sol::table
-new_juce_rectangle (lua_State* L, const char* name, Args&& ...args) {
+new_rectangle (lua_State* L, const char* name, Args&& ...args) {
     using R = juce::Rectangle<T>;
     sol::state_view lua (L);
     sol::table M = lua.create_table();
