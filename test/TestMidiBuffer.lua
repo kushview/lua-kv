@@ -26,19 +26,20 @@ test_MidiBuffer = {
 
     testMessages = function()
         local buf = MidiBuffer()
-        local on, off = 1, 234
-        buf:insert (midi.noteon (1, 55, 100), on)
-        buf:insert (midi.noteoff (1, 55), off)
+        buf:insert (midi.noteon (1, 55, 100), 1)
+        buf:insert (midi.noteoff (1, 55), 234)
         luaunit.assertEquals (buf:num_events(), 2)
+
+        local non, noff = 0, 0
         for m, f in buf:messages() do
-            if f == on then
-                luaunit.assertTrue (m:is_note_on())
-            elseif f == off then
-                luaunit.assertTrue (m:is_note_off())
-            else
-                luaunit.assertTrue (false, "Invalid frame")
+            if f == m:is_note_on() then
+                non = non + 1
+            elseif f == m:is_note_off() then
+                noff = noff + 1
             end
         end
+        luaunit.assertTrue (non + noff == 2, 
+            "Invalid message counts: "..non..noff)
     end,
 
     testReserve = function()

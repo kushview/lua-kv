@@ -176,8 +176,8 @@ static int midibuffer_addbuffer (lua_State* L) {
     return 0;
 }
 
-static int midibuffer_insert(lua_State* L) {
-    auto* impl = *(Impl**)lua_touserdata(L, 1);
+static int midibuffer_insert (lua_State* L) {
+    auto* impl = *(Impl**)lua_touserdata (L, 1);
     kv_packed_t pack;
     pack.packed = lua_tointeger (L, 2);
 
