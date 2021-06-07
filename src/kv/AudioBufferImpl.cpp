@@ -76,20 +76,20 @@ static int audio_clear (lua_State* L) {
     
     switch (lua_gettop (L)) {
         case 2: {
-            buf->clear (static_cast<int> (lua_tointeger (L, 2)), 0, 
+            buf->clear (static_cast<int> (lua_tointeger (L, 2) - 1), 0, 
                         buf->getNumSamples());
             break;
         }
 
         case 3: {
-            buf->clear (static_cast<int> (lua_tointeger (L, 2)),
+            buf->clear (static_cast<int> (lua_tointeger (L, 2)) - 1,
                         static_cast<int> (lua_tointeger (L, 3)));
             break;
         }
         
         case 4: {
-            buf->clear (static_cast<int> (lua_tointeger (L, 2)),
-                        static_cast<int> (lua_tointeger (L, 3)),
+            buf->clear (static_cast<int> (lua_tointeger (L, 2) - 1),
+                        static_cast<int> (lua_tointeger (L, 3) - 1),
                         static_cast<int> (lua_tointeger (L, 4)));
             break;
         }
@@ -131,10 +131,6 @@ static int audio_get (lua_State* L) {
     if (lua_gettop(L) < 3) {
         lua_pushnumber (L, 0.0);
     } else {
-    //    #if JUCE_DEBUG
-    //     const auto value = buf->getSample (lua_tointeger (L, 2) - 1, lua_tointeger (L, 3) - 1);
-    //     DBG("GET: raw " << value << " - casted: " << static_cast<lua_Number> (value));
-    //    #endif
         lua_pushnumber (L, buf->getSample (
             static_cast<int> (lua_tointeger (L, 2)) - 1,
             static_cast<int> (lua_tointeger (L, 3)) - 1));
@@ -154,18 +150,11 @@ static int audio_set (lua_State* L) {
         return 0;
 
     if (buf != nullptr) {
-       #if JUCE_DEBUG
-        // DBG("SET: " << static_cast<SampleType> (lua_tonumber (L, 4))
-        //             << " - " << lua_tonumber (L, 4));
-       #endif
         buf->setSample (
             static_cast<int> (lua_tointeger (L, 2)) - 1,
             static_cast<int> (lua_tointeger (L, 3)) - 1,
             static_cast<SampleType> (lua_tonumber (L, 4))
         );
-
-        // DBG ("GOT: " << buf->getSample (lua_tointeger (L, 2) - 1,
-        //                                 lua_tointeger (L, 3) - 1));
     }
 
     return 0;
