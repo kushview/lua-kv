@@ -167,7 +167,7 @@ static int midibuffer_addbuffer (lua_State* L) {
     if (lua_gettop (L) >= 5) {
         impl->buffer.addEvents (
             **(MidiBuffer**) lua_touserdata (L, 2),
-            static_cast<int> (lua_tointeger (L, 3)),
+            static_cast<int> (lua_tointeger (L, 3) - 1),
             static_cast<int> (lua_tointeger (L, 4)),
             static_cast<int> (lua_tointeger (L, 5)));
     } else {
