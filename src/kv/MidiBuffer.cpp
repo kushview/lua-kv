@@ -66,7 +66,7 @@ static int midibuffer_events_closure (lua_State* L) {
     const auto& ref = (*(*impl).iter);
     lua_pushlightuserdata (L, (void*) ref.data);
     lua_pushinteger (L, ref.numBytes);
-    lua_pushinteger (L, ref.samplePosition);
+    lua_pushinteger (L, ref.samplePosition + 1);
     ++impl->iter;
 
     return 3;
@@ -91,7 +91,7 @@ static int midibuffer_messages_closure (lua_State* L) {
     const auto& ref = (*(*impl).iter);
     **impl->message = ref.getMessage();
     lua_rawgeti (L, LUA_REGISTRYINDEX, impl->msgref);
-    lua_pushinteger (L, ref.samplePosition);
+    lua_pushinteger (L, ref.samplePosition + 1);
     ++impl->iter;
 
     return 2;
@@ -110,7 +110,7 @@ static int midibuffer_addmessage (lua_State* L) {
     auto* impl = *(Impl**) lua_touserdata (L, 1);
     impl->buffer.addEvent (
         **(MidiMessage**) lua_touserdata (L, 2), 
-        static_cast<int> (lua_tointeger (L, 3)));
+        static_cast<int> (lua_tointeger (L, 3) + 1));
     return 0;
 }
 
@@ -118,7 +118,7 @@ static int midibuffer_addevent (lua_State* L) {
     auto* impl = *(Impl**) lua_touserdata (L, 1);
     impl->buffer.addEvent ((juce::uint8*) lua_touserdata (L, 2),
                             static_cast<int> (lua_tointeger (L, 3)),
-                            static_cast<int> (lua_tointeger (L, 4)));
+                            static_cast<int> (lua_tointeger (L, 4) - 1));
     return 0;
 }
 
@@ -138,7 +138,7 @@ static int midibuffer_clear (lua_State* L) {
         }
 
         case 3: {
-            (*impl).buffer.clear (static_cast<int> (lua_tointeger (L, 2)),
+            (*impl).buffer.clear (static_cast<int> (lua_tointeger (L, 2) - 1),
                                   static_cast<int> (lua_tointeger (L, 3)));
             break;
         }
@@ -182,7 +182,7 @@ static int midibuffer_insert (lua_State* L) {
     pack.packed = lua_tointeger (L, 2);
 
     impl->buffer.addEvent ((uint8_t*) pack.data, 4,
-                           static_cast<int> (lua_tointeger (L, 3)));
+                           static_cast<int> (lua_tointeger (L, 3) - 1));
     return 0;
 }
 
@@ -238,14 +238,14 @@ static const luaL_Reg buffer_methods[] = {
     // -- @data    Raw bite array
     // -- @size    Size in bytes
     // -- @frame   Audio frame index in buffer
-    // for data, size, frame in buffer:iter() do
+    // for data, size, frame in buffer:events() do
     //     -- do something with midi data
     // end
     { "events",             midibuffer_events },
 
     /// Add a raw MIDI Event
     // @function MidiBuffer:addevent
-    // @param data Message to add
+    // @param data Raw event data to add
     // @int size Size of data in bytes
     // @int frame Insert index
     { "addevent",           midibuffer_addevent },
@@ -257,7 +257,7 @@ static const luaL_Reg buffer_methods[] = {
     // @usage
     // -- @msg     A kv.MidiMessage
     // -- @frame   Audio frame index in buffer
-    // for msg, frame in buffer:events() do
+    // for msg, frame in buffer:messages() do
     //     -- do something with midi data
     // end
     { "messages",           midibuffer_messages },
