@@ -233,7 +233,7 @@ static const luaL_Reg midimessage_methods[] = {
     { "data",                   midimessage_data },
 
     /// Message description.
-    // Human readable information about the message.
+    // Get human readable information about the message.
     // @function MidiMessage:description
     // @treturn string
     { "description",            midimessage_description },
