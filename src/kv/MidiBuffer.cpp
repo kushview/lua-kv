@@ -123,8 +123,11 @@ static int midibuffer_addevent (lua_State* L) {
 }
 
 static int midibuffer_swap (lua_State* L) {
+    if (lua_type (L, 2) != LUA_TUSERDATA)
+        return 0;
     auto* impl = *(Impl**) lua_touserdata (L, 1);
-    impl->buffer.swapWith (**(MidiBuffer**) lua_touserdata (L, 2));
+    auto* o    = *(Impl**) lua_touserdata (L, 2);
+    impl->buffer.swapWith (o->buffer);
     return 0;
 }
 
