@@ -18,9 +18,98 @@ PERFORMANCE OF THIS SOFTWARE.
 // @author Michael Fisher
 // @module kv.byte
 
-#include <lauxlib.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <lauxlib.h>
+#include <lualib.h>
+#include "lua-kv.h"
 #include "packed.h"
+
+typedef struct _kv_bytes_t {
+    size_t      size;
+    uint8_t*    data;
+} kv_bytes_t;
+
+void kv_bytes_init (kv_bytes_t* b, size_t size) {
+    b->data = NULL;
+    b->size = size;
+    if (size > 0) {
+        b->data = (uint8_t*) malloc (size + 1);
+        b->size = size;
+        memset (b->data, 0, b->size);
+    }
+}
+
+void kv_bytes_free (kv_bytes_t* b) {
+    b->size = 0;
+    if (b->data != NULL) {
+        free (b->data);
+        b->data = NULL;
+    }
+}
+
+uint8_t kv_bytes_get (kv_bytes_t* b, int index) {
+    return b->data[index];
+}
+
+void kv_bytes_set (kv_bytes_t* b, int index, uint8_t value) {
+    b->data[index] = value;
+}
+
+/// Create a new byte array.
+// @int s Size in bytes to allocate
+// @treturn kv.Bytes The new byte array.
+static int f_new (lua_State* L) {
+    kv_bytes_t* b = (kv_bytes_t*) lua_newuserdata (L, sizeof (kv_bytes_t));
+    size_t size = lua_isnumber (L, 1) ? (size_t) lua_tonumber (L, 1) : 0;
+    kv_bytes_init (b, size);
+    return 1;
+}
+
+/// Free used memory.
+// @tparam b kv.Bytes the array to free
+static int f_free (lua_State* L) {
+    kv_bytes_t* b = (kv_bytes_t*) lua_touserdata (L, 1);
+    kv_bytes_free (b);
+    return 0;
+}
+
+/// Get a byte from the array.
+// @tparam b kv.Bytes Byte array
+// @int i Index in the array
+static int f_get (lua_State* L) {
+    kv_bytes_t* b = (kv_bytes_t*) lua_touserdata (L, 1);
+    int index = luaL_checkinteger (L, 2);
+    luaL_argcheck (L, b != NULL, 1, "`bytes' expected");
+    luaL_argcheck (L, index >= 1 && index <= b->size, 2, "index out of range");
+    lua_pushinteger (L, (lua_Integer) kv_bytes_get (b, index - 1));
+    return 1;
+}
+
+/// Set a byte in the array
+// @tparam b kv.Bytes Byte array
+// @int i Index in the array
+// @int v Value to set in the range 0x00 to 0xFF inclusive
+static int f_set (lua_State* L) {
+    kv_bytes_t* b = (kv_bytes_t*) lua_touserdata (L, 1);
+    lua_Integer index = luaL_checkinteger (L, 2);
+    lua_Integer value = luaL_checkinteger (L, 3);
+    luaL_argcheck (L, b != NULL, 1, "`bytes' expected");
+    luaL_argcheck (L, index >= 1 && index <= b->size, 2, "index out of range");
+    kv_bytes_set (b, index - 1, (uint8_t) value);
+    return 1;
+}
+
+/// Returns the size in bytes.
+// @tparam kv.Bytes Byte array
+// @treturn int The size in bytes.
+static int f_size (lua_State* L) {
+    kv_bytes_t* b = (kv_bytes_t*) lua_touserdata (L, 1);
+    luaL_argcheck (L, b != NULL, 1, "`bytes' expected");
+    lua_pushinteger (L, (lua_Integer) b->size);
+    return 1;
+}
 
 /// Pack 4 bytes in a 64bit integer.
 // Undefined params are treated as zero
@@ -68,13 +157,29 @@ static int f_pack (lua_State* L) {
     return 1;
 }
 
-static const luaL_Reg midi_f[] = {
+static const luaL_Reg bytes_f[] = {
+    { "new",    f_new },
+    { "free",   f_free },
+    { "size",   f_size },
+    { "get",    f_get },
+    { "set",    f_set },
     { "pack",   f_pack },
     { NULL, NULL }
 };
 
+static const luaL_Reg bytes_m[] = {
+    { NULL, NULL }
+};
+
 LUAMOD_API
-int luaopen_kv_byte (lua_State* L) {
-    luaL_newlib (L, midi_f);
+int luaopen_kv_bytes (lua_State* L) {
+    if (luaL_newmetatable (L, LKV_MT_BYTE_ARRAY)) {
+        lua_pushvalue (L, -1);               /* duplicate the metatable */
+        lua_setfield (L, -2, "__index");     /* mt.__index = mt */
+        luaL_setfuncs (L, bytes_m, 0);
+        lua_pop (L, 1);
+    }
+
+    luaL_newlib (L, bytes_f);
     return 1;
 }

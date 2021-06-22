@@ -49,6 +49,7 @@ extern "C" {
 
 #define LKV_MT_AUDIO_BUFFER_64              "kv.AudioBuffer64"
 #define LKV_MT_AUDIO_BUFFER_32              "kv.AudioBuffer32"
+#define LKV_MT_BYTE_ARRAY                   "kv.ByteArray"
 #define LKV_MT_MIDI_MESSAGE                 "kv.MidiMessage"
 #define LKV_MT_MIDI_BUFFER                  "kv.MidiBuffer"
 #define LKV_MT_MIDI_PIPE                    "kv.MidiPipe"
