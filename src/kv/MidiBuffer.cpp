@@ -5,6 +5,7 @@
 // @pragma nostrip
 
 #include "kv/lua/midi_buffer.hpp"
+#include "bytes.h"
 #include "packed.h"
 #define LKV_MT_MIDI_BUFFER_TYPE "kv.MidiBufferClass"
 
@@ -179,6 +180,15 @@ static int midibuffer_addbuffer (lua_State* L) {
     return 0;
 }
 
+static int midibuffer_insertbytes (lua_State* L) {
+    auto* impl = *(Impl**) lua_touserdata (L, 1);
+    auto* b = (kv_bytes_t*) lua_touserdata (L, 2);
+    auto  n = static_cast<int> (lua_tointeger (L, 3));
+    auto  f = static_cast<int> (lua_tointeger (L, 4)) - 1;
+    impl->buffer.addEvent (b->data, n, f);
+    return 0;
+}
+
 static int midibuffer_insert (lua_State* L) {
     auto* impl = *(Impl**)lua_touserdata (L, 1);
     kv_packed_t pack;
@@ -233,12 +243,21 @@ static const luaL_Reg buffer_methods[] = {
     // @int frame Sample index to insert at
     { "insert",             midibuffer_insert },
 
-    /// Iterate over MIDI data.  
+    /// Insert some bytes into the buffer.
+    // The kv.ByteArray passed in should contain a complete MIDI message
+    // of any type.
+    // @function MidiBuffer:insertbytes
+    // @tparam kv.ByteArray bytes The bytes to add
+    // @int size Max number of bytes to add
+    // @int frame Sample index to insert at
+    { "insertbytes",        midibuffer_insertbytes },
+
+    /// Iterate over MIDI data.
     // Iterate over midi data in this buffer
     // @function MidiBuffer:events
     // @return Event data iterator
     // @usage
-    // -- @data    Raw bite array
+    // -- @data    Raw byte array
     // -- @size    Size in bytes
     // -- @frame   Audio frame index in buffer
     // for data, size, frame in buffer:events() do

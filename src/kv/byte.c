@@ -24,12 +24,9 @@ PERFORMANCE OF THIS SOFTWARE.
 #include <lauxlib.h>
 #include <lualib.h>
 #include "lua-kv.h"
+#include "bytes.h"
 #include "packed.h"
 
-typedef struct _kv_bytes_t {
-    size_t      size;
-    uint8_t*    data;
-} kv_bytes_t;
 
 void kv_bytes_init (kv_bytes_t* b, size_t size) {
     b->data = NULL;
@@ -50,7 +47,7 @@ void kv_bytes_free (kv_bytes_t* b) {
 }
 
 uint8_t kv_bytes_get (kv_bytes_t* b, int index) {
-    return b->data[index];
+    return b->data [index];
 }
 
 void kv_bytes_set (kv_bytes_t* b, int index, uint8_t value) {
