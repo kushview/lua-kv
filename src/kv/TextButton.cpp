@@ -52,6 +52,14 @@ int luaopen_kv_TextButton (lua_State* L) {
         sol::meta_method::to_string, [](TextButton& self) {
             return kv::lua::to_string (self, LKV_TYPE_NAME_TEXT_BUTTON);
         },
+        "togglestate", sol::property (
+            [](TextButton& self, bool state) {
+                self.setToggleState (state, sendNotificationAsync);
+            },
+            [](TextButton& self) {
+                return self.getToggleState();
+            }
+        ),
         "text", sol::property (
             [](TextButton& self, const char* text) {
                 self.setButtonText (String::fromUTF8 (text));
@@ -71,7 +79,12 @@ int luaopen_kv_TextButton (lua_State* L) {
     __props.add (
         /// Displayed text.
         // @tfield string TextButton.text
-        "text"
+        "text",
+
+        /// The button's toggle state.
+        // Setting this property will notify listeners.
+        // @tfield bool TextButton.togglestate
+        "togglestate"
     );
 
     sol::stack::push (L, T);
