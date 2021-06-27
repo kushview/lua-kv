@@ -16,7 +16,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /// MIDI utilities.
 // @author Michael Fisher
-// @module kv.byte
+// @module kv.bytes
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -55,17 +55,20 @@ void kv_bytes_set (kv_bytes_t* b, int index, uint8_t value) {
 }
 
 /// Create a new byte array.
-// @int s Size in bytes to allocate
-// @treturn kv.Bytes The new byte array.
+// @function new
+// @int size Size in bytes to allocate
+// @treturn kv.ByteArray The new byte array.
 static int f_new (lua_State* L) {
     kv_bytes_t* b = (kv_bytes_t*) lua_newuserdata (L, sizeof (kv_bytes_t));
+    luaL_setmetatable (L, LKV_MT_BYTE_ARRAY);
     size_t size = lua_isnumber (L, 1) ? (size_t) lua_tonumber (L, 1) : 0;
     kv_bytes_init (b, size);
     return 1;
 }
 
 /// Free used memory.
-// @tparam b kv.Bytes the array to free
+// @function free
+// @param bytes The array to free
 static int f_free (lua_State* L) {
     kv_bytes_t* b = (kv_bytes_t*) lua_touserdata (L, 1);
     kv_bytes_free (b);
@@ -73,8 +76,9 @@ static int f_free (lua_State* L) {
 }
 
 /// Get a byte from the array.
-// @tparam b kv.Bytes Byte array
-// @int i Index in the array
+// @function get
+// @param bytes Bytes to get from
+// @int index Index in the array
 static int f_get (lua_State* L) {
     kv_bytes_t* b = (kv_bytes_t*) lua_touserdata (L, 1);
     int index = luaL_checkinteger (L, 2);
@@ -84,10 +88,11 @@ static int f_get (lua_State* L) {
     return 1;
 }
 
-/// Set a byte in the array
-// @tparam b kv.Bytes Byte array
-// @int i Index in the array
-// @int v Value to set in the range 0x00 to 0xFF inclusive
+/// Set a byte in the array.
+// @function set
+// @param bytes Target bytes
+// @int index Index in the array
+// @int value Value to set in the range 0x00 to 0xFF inclusive
 static int f_set (lua_State* L) {
     kv_bytes_t* b = (kv_bytes_t*) lua_touserdata (L, 1);
     lua_Integer index = luaL_checkinteger (L, 2);
@@ -99,7 +104,8 @@ static int f_set (lua_State* L) {
 }
 
 /// Returns the size in bytes.
-// @tparam kv.Bytes Byte array
+// @function size
+// @param bytes Target bytes
 // @treturn int The size in bytes.
 static int f_size (lua_State* L) {
     kv_bytes_t* b = (kv_bytes_t*) lua_touserdata (L, 1);
@@ -165,6 +171,7 @@ static const luaL_Reg bytes_f[] = {
 };
 
 static const luaL_Reg bytes_m[] = {
+    { "__gc",   f_free },
     { NULL, NULL }
 };
 
