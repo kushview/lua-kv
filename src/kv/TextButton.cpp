@@ -54,7 +54,7 @@ int luaopen_kv_TextButton (lua_State* L) {
         },
         "togglestate", sol::property (
             [](TextButton& self, bool state) {
-                self.setToggleState (state, sendNotificationAsync);
+                self.setToggleState (state, sendNotification);
             },
             [](TextButton& self) {
                 return self.getToggleState();
