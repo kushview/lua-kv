@@ -16,12 +16,18 @@ int luaopen_kv_Graphics (lua_State* L) {
         /// Methods.
         // @section methods
 
+        /// Save the current state.
+        // @function Graphics:savestate
+        "savestate", &Graphics::saveState,
+
+        /// Restore the last saved state.
+        // @function Graphics:restorestate
+        "restorestate", &Graphics::restoreState,
+
         /// Change the color.
-        // @function Graphics:color
+        // @function Graphics:setcolor
         // @int color New ARGB color as integer. e.g.`0xAARRGGBB`
-        "color", sol::overload (
-            [](Graphics& g, int color) { g.setColour (Colour (color)); }
-        ),
+        "setcolor", [](Graphics& g, int color) { g.setColour (Colour (color)); },
         
         /// Draw some text.
         // @function Graphics:drawtext
