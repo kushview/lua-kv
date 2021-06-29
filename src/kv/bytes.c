@@ -14,7 +14,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 */
 
-/// MIDI utilities.
+/// Manage raw byte arrays.
 // @author Michael Fisher
 // @module kv.bytes
 
@@ -26,7 +26,6 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "lua-kv.h"
 #include "bytes.h"
 #include "packed.h"
-
 
 void kv_bytes_init (kv_bytes_t* b, size_t size) {
     b->data = NULL;
@@ -46,11 +45,11 @@ void kv_bytes_free (kv_bytes_t* b) {
     }
 }
 
-uint8_t kv_bytes_get (kv_bytes_t* b, int index) {
+uint8_t kv_bytes_get (kv_bytes_t* b, lua_Integer index) {
     return b->data [index];
 }
 
-void kv_bytes_set (kv_bytes_t* b, int index, uint8_t value) {
+void kv_bytes_set (kv_bytes_t* b, lua_Integer index, uint8_t value) {
     b->data[index] = value;
 }
 
@@ -81,7 +80,7 @@ static int f_free (lua_State* L) {
 // @int index Index in the array
 static int f_get (lua_State* L) {
     kv_bytes_t* b = (kv_bytes_t*) lua_touserdata (L, 1);
-    int index = luaL_checkinteger (L, 2);
+    lua_Integer index = luaL_checkinteger (L, 2);
     luaL_argcheck (L, b != NULL, 1, "`bytes' expected");
     luaL_argcheck (L, index >= 1 && index <= b->size, 2, "index out of range");
     lua_pushinteger (L, (lua_Integer) kv_bytes_get (b, index - 1));
