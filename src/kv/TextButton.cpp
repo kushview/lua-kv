@@ -31,6 +31,7 @@ public:
     /// On clicked handler.
     // Executed when the button is clicked by the user.
     // @function TextButton:clicked
+    // @tparam kv.TextButton self The reference to the clicked button
     void buttonClicked (Button*) override {
         try {
             if (sol::protected_function f = widget ["clicked"])
@@ -56,14 +57,23 @@ int luaopen_kv_TextButton (lua_State* L) {
         sol::meta_method::to_string, [](TextButton& self) {
             return kv::lua::to_string (self, LKV_TYPE_NAME_TEXT_BUTTON);
         },
+
+        /// The button's toggle state.
+        // Setting this property **will notify** listeners. If you need to change
+        // the toggle state and NOT notify, use the _settogglestate_
+        // method instead.
+        // @tfield bool TextButton.togglestate
         "togglestate", sol::property (
             [](TextButton& self, bool state) {
-                self.setToggleState (state, sendNotification);
+                self.setToggleState (state, sendNotificationSync);
             },
             [](TextButton& self) {
                 return self.getToggleState();
             }
         ),
+
+        /// Displayed text.
+        // @tfield string TextButton.text
         "text", sol::property (
             [](TextButton& self, const char* text) {
                 self.setButtonText (String::fromUTF8 (text));
@@ -72,6 +82,31 @@ int luaopen_kv_TextButton (lua_State* L) {
                 return self.getButtonText().toStdString();
             }
         ),
+
+        /// The button's toggle state.
+        // Returns the toggle state.
+        // @function TextButton:gettogglestate
+        // @treturn bool True if toggled currently.
+        "gettogglestate", &TextButton::getToggleState,
+
+        "settogglestate", sol::overload (
+            /// Change the button's toggle state.
+            // Note this variation **will send** notifications to listeners.
+            // @function TextButton:settogglestate
+            // @bool state  The new toggle state on or off
+            [](TextButton& self, bool toggled) {
+                self.setToggleState (toggled, sendNotification);
+            },
+
+            /// Change the button's toggle state.
+            // @function TextButton:settogglestate
+            // @bool state  The new toggle state on or off
+            // @bool notify If true sends notification to listeners
+            [](TextButton& self, bool toggled, bool notify) {
+                self.setToggleState (toggled, notify ? sendNotificationSync : dontSendNotification);
+            }
+        ),
+
         sol::base_classes, sol::bases<Component>()
     );
 
@@ -81,14 +116,15 @@ int luaopen_kv_TextButton (lua_State* L) {
     /// Attributes.
     // @section attributes
     __props.add (
-        /// Displayed text.
-        // @tfield string TextButton.text
+        
         "text",
 
-        /// The button's toggle state.
-        // Setting this property will notify listeners.
-        // @tfield bool TextButton.togglestate
+        
         "togglestate"
+    );
+
+    T_mt["__methods"].get_or_create<sol::table>().add (
+        "settogglestate"
     );
 
     sol::stack::push (L, T);
