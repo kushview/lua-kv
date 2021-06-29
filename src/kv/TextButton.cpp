@@ -32,8 +32,12 @@ public:
     // Executed when the button is clicked by the user.
     // @function TextButton:clicked
     void buttonClicked (Button*) override {
-        if (sol::function f = widget ["clicked"])
-            f (widget);
+        try {
+            if (sol::protected_function f = widget ["clicked"])
+                f (widget);
+        } catch (const sol::error& e) {
+            std::cerr << e.what() << std::endl;
+        }
     }
 
 private:
