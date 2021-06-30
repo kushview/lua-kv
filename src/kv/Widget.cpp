@@ -17,7 +17,6 @@ class Widget : public juce::Component
 public:
     ~Widget()
     {
-        Desktop::getInstance().getGlobalScaleFactor();
         widget = sol::lua_nil;
     }
 
