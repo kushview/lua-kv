@@ -107,6 +107,11 @@ int luaopen_kv_Widget (lua_State* L) {
         sol::meta_method::to_string, [](Widget& self) {
             return kv::lua::to_string (self, LKV_TYPE_NAME_WIDGET);
         },
+        /// Add a child widget.
+        // @function Widget:add
+        // @tparam kv.Widget widget Widget to add
+        // @int[opt] zorder Z-order
+        // @within Methods
         "add", sol::overload (&Widget::add, &Widget::addWithZ),
         "addtodesktop", sol::overload (
             [](Widget& self, int flags) { 
@@ -121,11 +126,6 @@ int luaopen_kv_Widget (lua_State* L) {
 
     sol::table T_mt = T [sol::metatable_key];
     T_mt["__methods"].get_or_create<sol::table>().add (
-        /// Add a child widget.
-        // @function Widget:add
-        // @tparam kv.Widget widget Widget to add
-        // @int[opt] zorder Z-order
-        // @within Methods
         "add"
     );
 
