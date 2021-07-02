@@ -14,6 +14,7 @@ def options(opt):
 
 def configure (conf):
     conf.load ('compiler_c compiler_cxx')
+    self.find_program ('ldoc', mandatory=False)
 
     if conf.options.debug:
         conf.define ("DEBUG", 1)
@@ -28,9 +29,6 @@ def configure (conf):
     conf.check (header_name='lua.h', uselib_store='LUA', mandatory=True)
     conf.check (lib='lua', uselib_store='LUA_LIB', mandatory=True)
     conf.check (header_name="sol/forward.hpp", uselib_store="SOL", mandatory=False)
-
-    # conf.check_cfg (package='juce_debug-6' if conf.options.debug else 'juce-6', 
-    #                 uselib_store='JUCE', args=['--libs', '--cflags'], mandatory=False)
     
     conf.env.append_unique ('CXXFLAGS', ['-std=c++17'])
 
@@ -122,6 +120,13 @@ def build_lib (bld):
     bld.add_group()
     return lib
 
+def build_lua_docs (bld):
+    if bool(bld.env.LDOC):
+        call ([bld.env.LDOC[0], '-f', 'markdown', '.' ])
+
+def docs (ctx):
+    ctx.add_pre_fun (build_lua_docs)
+
 def build (bld):
     for module in 'byte midi round'.split():
         build_cmodule (bld, module)
@@ -166,3 +171,7 @@ def build (bld):
 def check (ctx):
     if 0 != call (["lua", "./test/run.lua"]):
         ctx.fatal ("Tests failed")
+
+class DocsBuildContext (BuildContext):
+    cmd = 'docs'
+    fun = 'docs'
