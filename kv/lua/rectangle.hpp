@@ -16,19 +16,42 @@ new_rectangle (lua_State* L, const char* name, Args&& ...args) {
     using R = juce::Rectangle<T>;
     sol::state_view lua (L);
     sol::table M = lua.create_table();
-
     M.new_usertype<R> (name, sol::no_constructor,
-        sol::call_constructor, sol::factories (
-            []() { return R(); },
-            [](T x, T y, T w, T h) { return R (x, y, w, h); },
-            [](T w, T h) { return R (w, h); },
-            [](juce::Point<T> p1, juce::Point<T> p2) { return R (p1, p2); }
-        ),
-        
         /// Class Methods.
         // @section classmethods
-        
-        /// @function Rectangle.fromcoords
+
+        "new", sol::factories (
+            /// Create a new empty rectangle.
+            // @function Rectangle.new
+            // @treturn kv.Rectangle
+            []() { return R(); },
+
+            /// Create a new rectangle.
+            // @function Rectangle.new
+            // @param x
+            // @param y
+            // @param width
+            // @param height
+            // @treturn kv.Rectangle
+            [](T x, T y, T w, T h) { return R (x, y, w, h); },
+
+            /// Create a new rectangle.
+            // @function Rectangle.new
+            // @param width
+            // @param height
+            // @treturn kv.Rectangle
+            [](T w, T h) { return R (w, h); },
+
+            /// Create a new rectangle from two points.
+            // @function Rectangle.new
+            // @tparam kv.Point p1
+            // @tparam kv.Point p2
+            // @treturn kv.Rectangle
+            [](juce::Point<T> p1, juce::Point<T> p2) { return R (p1, p2); }
+        ),
+
+        /// Create a new rectangle from a set of coordinates. 
+        // @function Rectangle.fromcoords
         // @int x1 Left
         // @int y1 Top
         // @int x2 Right
@@ -44,15 +67,6 @@ new_rectangle (lua_State* L, const char* name, Args&& ...args) {
 
         /// @field Rectangle.y
         "y",                sol::property (&R::getY, &R::setY),
-
-        /// @field Rectangle.center
-        "center",           sol::readonly_property (&R::getCentre),
-
-        /// @field Rectangle.centerx
-        "centerx",          sol::readonly_property (&R::getCentreX),
-
-        /// @field Rectangle.centery
-        "centery",          sol::readonly_property (&R::getCentreY),
 
         /// @field Rectangle.width
         "width",            sol::property (&R::getWidth, &R::setWidth),
@@ -71,9 +85,24 @@ new_rectangle (lua_State* L, const char* name, Args&& ...args) {
 
         /// @field Rectangle.bottom
         "bottom",           sol::property (&R::getBottom, &R::setBottom),
-        
+
         /// Methods.
         // @section methods
+
+        /// Returns the center point of this rect. 
+        // @function Rectangle:center
+        // @treturn kv.Point
+        "center",           [](R& self) {
+            juce::Point<lua_Number> pt ((lua_Number)self.getCentreX(), 
+                                        (lua_Number)self.getCentreY());
+            return pt;
+        },
+
+        /// @function Rectangle:centerx
+        "centerx",          &R::getCentreX,
+
+        /// @function Rectangle:centery
+        "centery",          &R::getCentreY,
 
         /// Is empty.
         // @function Rectangle:isempty
@@ -119,12 +148,11 @@ new_rectangle (lua_State* L, const char* name, Args&& ...args) {
         ),
         
         /// Reduce the rectangle in size.
-        // @function Rectangle:translate
+        // @function Rectangle:reduce
         // @param dx
         // @param dy
         "reduce",               &R::reduce,
 
-        
         "reduced", sol::overload (
             /// Returns reduced rectangle.
             // @function Rectangle:reduced

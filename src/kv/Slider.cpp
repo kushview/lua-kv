@@ -108,57 +108,56 @@ int luaopen_kv_Slider (lua_State* L) {
             }
         ),
 
-
         /// Methods.
         // @section methods
 
         /// Get the current range.
         // @function Slider:range
         // @return kv.Range The current range
+        "range", [](Slider& self) {
+            return self.getRange();
+        },
 
-        /// Set the range.
-        // @function Slider:range
-        // @number min
-        // @number max
-        // @number interval (default: 0.0)
-        // @return kv.Range The current range
-
-        /// Set the range.
-        // @function Slider:range
-        // @tparam kv.Range range Range to set
-        // @number interval Step-size
-        // @return kv.Range The current range
-        "range", sol::overload (
-            [](Slider& self) {
-                return self.getRange();
-            },
+        "setrange", sol::overload (
+            /// Set the range.
+            // @function Slider:setrange
+            // @number min
+            // @number max
+            // @number interval (default: 0.0)
             [](Slider& self, double min, double max) {
                 self.setRange (min, max);
-                return self.getRange();
             },
             [](Slider& self, double min, double max, double interval) {
                 self.setRange (min, max, interval);
-                return self.getRange();
             },
+
+            /// Set the range.
+            // @function Slider:setrange
+            // @tparam kv.Range range Range to set
+            // @number interval Step-size
             [](Slider& self, Range<double> r, double interval) {
                 self.setRange (r, interval);
-                return self.getRange();
             }
         ),
 
-        /// Get or set the value.
+        /// Returns the current value.
         // @function Slider:value
-        "value", sol::overload (
-            [](Slider& self) { return self.getValue(); },
-            [](Slider& self, double value) {
-                self.setValue (value, juce::sendNotificationAsync);
-                return self.getValue();
+        // @treturn number
+        "value",        [](Slider& self) { return self.getValue(); },
+
+        "setvalue", sol::overload (
+            /// Change the current value.
+            // @function Slider:setvalue
+            // @number value New value
+            // @tparam mixed notify Send notification to listeners
+            [](Slider& self, double value, bool notify) {
+                self.setValue (value, notify ? juce::sendNotificationAsync : juce::dontSendNotification);
             },
+
             [](Slider& self, double value, int notify) {
                 if (! isPositiveAndBelow (notify, 4))
                     notify = sendNotificationAsync;
                 self.setValue (value, static_cast<NotificationType> (notify));
-                return self.getValue();
             }
         ),
 
@@ -168,7 +167,7 @@ int luaopen_kv_Slider (lua_State* L) {
         // @bool ro Text box is read only
         // @int width Text box width
         // @int height Text box height
-        "textboxstyle", [](Slider& self, lua_Number position, bool readonly, lua_Number width, lua_Number height) {
+        "settextboxstyle", [](Slider& self, lua_Number position, bool readonly, lua_Number width, lua_Number height) {
             const auto pos = static_cast<Slider::TextEntryBoxPosition> (jlimit (0, 4, roundToInt (position)));
             self.setTextBoxStyle (pos, readonly, roundToInt (width), roundToInt (height));
         },
@@ -275,7 +274,7 @@ int luaopen_kv_Slider (lua_State* L) {
         "min", "max", "interval", "style"
     );
     T_mt["__methods"].get_or_create<sol::table>().add (
-        "range", "value", "textboxstyle"
+        "range", "setrange", "value", "setvalue", "settextboxstyle"
     );
 
     sol::stack::push (L, T);

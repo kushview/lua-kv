@@ -63,15 +63,15 @@ static int f_integer (lua_State* L) {
     return 1;
 }
 
-static const luaL_Reg funcs[] = {
+static const luaL_Reg round_f[] = {
     /// Round a number to 32bit precision.
-    // @function float
+    // @function floats
     // @number input Number to round
     // @treturn number Rounded value
     { "float",  f_float },
 
     /// Cast a number to an Integer.
-    // @function integer
+    // @function round.integer
     // @number input Number to round
     // @treturn int The converted integer
     { "integer", f_integer },
@@ -81,6 +81,6 @@ static const luaL_Reg funcs[] = {
 
 LUAMOD_API
 int luaopen_kv_round (lua_State* L) {
-    luaL_newlib (L, funcs);
+    luaL_newlib (L, round_f);
     return 1;
 }

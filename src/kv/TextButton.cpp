@@ -28,6 +28,9 @@ public:
             impl->widget = proxy;
     }
 
+    /// Handlers.
+    // @section handlers
+
     /// On clicked handler.
     // Executed when the button is clicked by the user.
     // @function TextButton:clicked
@@ -58,9 +61,12 @@ int luaopen_kv_TextButton (lua_State* L) {
             return kv::lua::to_string (self, LKV_TYPE_NAME_TEXT_BUTTON);
         },
 
+        /// Attributes.
+        // @section attributes
+
         /// The button's toggle state.
         // Setting this property **will notify** listeners. If you need to change
-        // the toggle state and NOT notify, use the _settogglestate_
+        // the toggle state and NOT notify, use the @{settogglestate}
         // method instead.
         // @tfield bool TextButton.togglestate
         "togglestate", sol::property (
@@ -83,11 +89,8 @@ int luaopen_kv_TextButton (lua_State* L) {
             }
         ),
 
-        /// The button's toggle state.
-        // Returns the toggle state.
-        // @function TextButton:gettogglestate
-        // @treturn bool True if toggled currently.
-        "gettogglestate", &TextButton::getToggleState,
+        /// Methods.
+        // @section methods
 
         "settogglestate", sol::overload (
             /// Change the button's toggle state.
@@ -118,8 +121,6 @@ int luaopen_kv_TextButton (lua_State* L) {
     __props.add (
         
         "text",
-
-        
         "togglestate"
     );
 

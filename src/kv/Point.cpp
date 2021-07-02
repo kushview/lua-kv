@@ -17,21 +17,30 @@ int luaopen_kv_Point (lua_State* L)
     using PTF = Point<lua_Number>;
     auto M = lua.create_table();
     M.new_usertype<PTF> (LKV_TYPE_NAME_POINT, sol::no_constructor,
-        sol::call_constructor, sol::factories (
+        "new", sol::factories (
+            /// Create a new point with x and y = 0.
+            // @function Point.new
+            // @treturn kv.Point
             []() { return PTF(); },
+
+            /// Create a new point.
+            // @function Point.new
+            // @number x X coordinate
+            // @number y Y coordinate
+            // @treturn kv.Point
             [](lua_Number x, lua_Number y) { return PTF (x, y); }
         ),
         sol::meta_method::to_string, [](PTF& self) {
             return self.toString().toStdString();
         },
 
-        /// X coord
+        /// X coord.
         // @class field
         // @name Point.x
         // @within Attributes
         "x",            sol::property (&PTF::getX, &PTF::setX),
 
-        /// Y coord
+        /// Y coord.
         // @class field
         // @name Point.x
         // @within Attributes

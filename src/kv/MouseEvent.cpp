@@ -18,7 +18,7 @@ int luaopen_kv_MouseEvent (lua_State* L)
         /// Attributes.
         // @section attributes
 
-        /// Position as @{kv.Point}
+        /// Position as @{kv.Point}.
         // @field MouseEvent.position
         "position", sol::readonly_property ([](MouseEvent& self) {
             return self.position.toFloat();

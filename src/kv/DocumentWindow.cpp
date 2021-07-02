@@ -69,7 +69,7 @@ public:
                 break;
             }
             
-            case sol::type::nil:
+            case sol::type::lua_nil:
             {
                 clearContentComponent();
                 content = sol::lua_nil;
@@ -99,11 +99,26 @@ int luaopen_kv_DocumentWindow (lua_State* L) {
         sol::meta_method::to_string, [](DocumentWindow& self) {
             return kv::lua::to_string (self, LKV_TYPE_NAME_WINDOW);
         },
+
+        /// Attributes.
+        // @section attributes
+
+        /// Methods.
+        // @section methods
+
+        /// Add to desktop.
+        // @function DocumentWindow:addtodesktop
         "addtodesktop",   [](DocumentWindow& self) { self.addToDesktop(); },
+
+        /// Change the viewed content.
+        // @function DocumentWindow:setcontent
+        // @tparam kv.Widget widget Content to set
         "setcontent",      &DocumentWindow::setContent,
-        "getcontent",      &DocumentWindow::getContent,
-        "content", sol::property (&DocumentWindow::getContent, 
-                                  &DocumentWindow::setContent),
+
+        /// Returns the viewed content widget.
+        // @function DocumentWindow:content
+        // @treturn kv.Widget
+        "content",         &DocumentWindow::getContent,
         
         sol::base_classes, sol::bases<juce::DocumentWindow,
                                       juce::ResizableWindow,
@@ -114,23 +129,12 @@ int luaopen_kv_DocumentWindow (lua_State* L) {
 
     auto T_mt = T[sol::metatable_key];
 
-    /// Attributes.
-    // @section attributes
     sol::table props = T_mt["__props"];
-    props.add (
-        /// Displayed content.
-        // Assign to the widget you wish to display. Set to nil to clear the
-        // content.
-        // @tfield kv.Widget DocumentWindow.content
-        "content"
-    );
+    props.add ();
     
-    /// Methods.
-    // @section methods
     sol::table methods = T_mt["__methods"];
     methods.add (
-        "getcontent",
-        "setcontent"
+        "content", "setcontent", "addtodesktop"
     );
 
     sol::stack::push (L, T);

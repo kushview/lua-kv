@@ -15,12 +15,18 @@ static auto create_message (lua_State* L) {
     return userdata;
 }
 
+/// Constructors.
+// @section ctors
+
+/// Create a new MIDI message.
+// @function MidiMessage.new
+// @int data Data as a packed integer. see @{kv.midi}
+// @treturn kv.MidiMessage
 static int midimessage_new (lua_State* L) {
     auto** msg = create_message (L);
-    if (lua_gettop(L) > 1 && lua_isinteger(L, 2)) {
+    if (lua_gettop(L) >= 1 && lua_isinteger (L, 1)) {
         kv_packed_t pack;
-        pack.packed = lua_tointeger (L, 2);
-
+        pack.packed = lua_tointeger (L, 1);
         **msg = juce::MidiMessage (pack.data[0], pack.data[1], pack.data[2]);
     }
     return 1;
@@ -93,7 +99,7 @@ static int midimessage_with_time (lua_State* L) {
 
 midimessage_get_int (channel,       getChannel)
 midimessage_set_int (set_channel,   setChannel)
-static int midimessage_is_channel (lua_State* L) {
+static int midimessage_isforchannel (lua_State* L) {
     auto* msg = *(juce::MidiMessage**) lua_touserdata (L, 1);
     lua_pushboolean (L, msg->isForChannel (
         static_cast<int> (lua_tointeger (L, 2))));
@@ -266,10 +272,10 @@ static const luaL_Reg midimessage_methods[] = {
 
     /// Is a channel message.
     // Returns true if the message has the given channel
-    // @function MidiMessage:ischannel
+    // @function MidiMessage:isforchannel
     // @int ch Channel to check
     // @treturn bool
-    { "ischannel",              midimessage_is_channel },
+    { "isforchannel",           midimessage_isforchannel },
 
     /// Set the channel.
     // @function MidiMessage:setchannel
@@ -372,51 +378,171 @@ static const luaL_Reg midimessage_methods[] = {
     // @treturn int Presure value
     { "pressure",               midimessage_pressure },
 
+    /// Is controller message.
+    // @function MidiMessage:iscontroller
+    // @treturn bool True if a controller message
     { "iscontroller",           midimessage_is_controller },
-    { "controller",             midimessage_controller },
-    { "controller_value",       midimessage_controller_value },
-    { "is_controller_type",     midimessage_is_controller_type },
 
-    { "is_notes_off",           midimessage_is_notes_off },
-    { "is_sound_off",           midimessage_is_sound_off },
-    { "is_reset_controllers",   midimessage_is_reset_controllers },
+    /// Returns the controller number.
+    // @function MidiMessage:controller
+    // @treturn int The controller number
+    { "controller",             midimessage_controller },
+
+    /// Returns the controller value.
+    // @function MidiMessage:controllervalue
+    // @treturn int The controller value
+    { "controllervalue",        midimessage_controller_value },
+
+    /// Check if this is a particular controller message.
+    // @function MidiMessage:iscontrollertype
+    // @int type Controller type to check for
+    { "iscontrollertype",       midimessage_is_controller_type },
+
+    /// True if all notes off message.
+    // @function MidiMessage:isnotesoff
+    // @treturn bool
+    { "isnotesoff",             midimessage_is_notes_off },
+
+    /// True if all sounds off message.
+    // @function MidiMessage:issoundoff
+    // @treturn bool
+    { "issoundoff",             midimessage_is_sound_off },
+
+    /// True if reset controllers message.
+    // @function MidiMessage:isresetcontrollers
+    // @treturn bool
+    { "isresetcontrollers",     midimessage_is_reset_controllers },
     
+    /// True if a Meta message.
+    // @function MidiMessage:ismeta
+    // @treturn bool
     { "ismeta",                 midimessage_is_meta },
+
+    /// Returns the metadata type.
+    // @function MidiMessage:metatype
+    // @treturn int
     { "metatype",               midimessage_meta_type },
+
+    /// Returns the metadata.
+    // @function MidiMessage:metadata
     { "metadata",               midimessage_meta_data },
+    
+    /// Returns the metadata length.
+    // @function MidiMessage:metalength
+    // @treturn int
     { "metalength",             midimessage_meta_length },
     
+    /// Returns true if a track message.
+    // @function MidiMessage:istrack
+    // @treturn bool
     { "istrack",                midimessage_is_track },
+
+    /// Returns true if track end message.
+    // @function MidiMessage:istrackend
+    // @treturn bool
     { "istrackend",             midimessage_is_end_of_track },
+
+    /// Returns true if track name message.
+    // @function MidiMessage:istrackname
+    // @treturn bool
     { "istrackname",            midimessage_is_track_name },
 
+    /// Returns true if a text message.
+    // @function MidiMessage:istext
+    // @treturn bool
     { "istext",                 midimessage_is_text },
+
+    /// Returns the text.
+    // @function MidiMessage:text
+    // @treturn string
     { "text",                   midimessage_text },
 
+    /// Returns true if a tempo message.
+    // @function MidiMessage:istempo
+    // @treturn bool
     { "istempo",                midimessage_is_tempo },
+
+    /// Returns the tempo SPQN.
+    // @function MidiMessage:tempospqn
+    // @treturn int
     { "tempospqn",              midimessage_tempo_seconds_pqn },
+
+    /// Returns the tempo ticks.
+    // @function MidiMessage:tempoticks
+    // @treturn int
     { "tempoticks",             midimessage_tempo_ticks },
 
+    /// Returns true if an active sense message.
+    // @function MidiMessage:isactivesense
+    // @treturn bool
     { "isactivesense",          midimessage_is_active_sense },
 
+    /// Returns true if a start message.
+    // @function MidiMessage:isstart
+    // @treturn bool
     { "isstart",                midimessage_is_start },
+
+    /// Returns true if a stop message.
+    // @function MidiMessage:isstop
+    // @treturn bool
     { "isstop",                 midimessage_is_stop },
+
+    /// Returns true if a continue message.
+    // @function MidiMessage:iscontinue
+    // @treturn bool
     { "iscontinue",             midimessage_is_continue },
+
+    /// Returns true if is MIDI clock.
+    // @function MidiMessage:isclock
+    // @treturn bool
     { "isclock",                midimessage_is_clock },
     
+    /// Returns true if a song position pointer.
+    // @function MidiMessage:isspp
+    // @treturn bool
     { "isspp",                  midimessage_is_spp },
+
+    /// Returns true if song position pointer beat.
+    // @function MidiMessage:sppbeat
+    // @treturn int
     { "sppbeat",                midimessage_spp_beat },
 
-    { "is_quarter_frame",       midimessage_is_quarter_frame },
-    { "quarter_frame_seq",      midimessage_quarter_frame_seq },
-    { "quarter_frame_value",    midimessage_quarter_frame_value },
+    /// Returns true if a quarter frame message.
+    // @function MidiMessage:isquarterframe
+    // @treturn bool
+    { "isquarterframe",         midimessage_is_quarter_frame },
 
-    { "is_full_frame",          midimessage_is_full_frame },
-    { "full_frame_params",      midimessage_full_frame_params },
+    /// Get the quarter frame sequence.
+    // @function MidiMessage:quarterframeseq
+    // @return The sequence
+    { "quarterframeseq",        midimessage_quarter_frame_seq },
 
-    { "is_mmc",                 midimessage_is_mmc },
-    { "mmc_command",            midimessage_mmc_command },
+    /// Returns true if song position pointer beat.
+    // @function MidiMessage:quarterframevalue
+    // @treturn int The quarter frame value
+    { "quarterframevalue",      midimessage_quarter_frame_value },
 
+    /// Returns true if a full frame message.
+    // @function MidiMessage:isfullframe
+    // @treturn bool
+    { "isfullframe",            midimessage_is_full_frame },
+
+    /// Get full frame parameters.
+    // @function MidiMessage:fullframeparams
+    // @return The params
+    { "fullframeparams",        midimessage_full_frame_params },
+
+    /// Returns true if a MMC message.
+    // @function MidiMessage:ismmc
+    // @treturn bool
+    { "ismmc",                  midimessage_is_mmc },
+
+    /// MMC Command.
+    // @function MidiMessage:mmccommand
+    { "mmccommand",             midimessage_mmc_command },
+
+    /// MIDI goto.
+    // @function MidiMessage:goto
     { "goto",                   midimessage_goto },
 
     { nullptr, nullptr }
@@ -432,8 +558,6 @@ int luaopen_kv_MidiMessage (lua_State* L) {
     }
 
     if (luaL_newmetatable (L, LKV_MT_MIDI_MESSAGE_TYPE)) {
-        lua_pushcfunction (L, midimessage_new);   /* push audio_new function */
-        lua_setfield (L, -2, "__call");     /* mt.__call = audio_new */
         lua_pop (L, 1);
     }
 

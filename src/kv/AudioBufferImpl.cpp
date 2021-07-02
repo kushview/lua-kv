@@ -277,22 +277,22 @@ static int audio_tostring (lua_State* L) {
 }
 
 /// Creates a empty audio buffer.
-// @function AudioBuffer.__call
+// @function AudioBuffer.new
 // @return An empty buffer.
 // @within Constructors
 // @usage
-// local buf = AudioBuffer() -- __call constructor
+// local buf = AudioBuffer.new()
 // -- do someting with `buf`
 
 /// Creates a new audio buffer with the specified channel and sample counts
 // @int nchannels Number of channels
 // @int nframes Number of samples in each channel
-// @function AudioBuffer.__call
+// @function AudioBuffer.new
 // @return Newly created audio buffer
 // @within Constructors
 // @usage
 // -- 2 channels, 2048 samples
-// local buf = AudioBuffer (2, 2048) -- __call constructor
+// local buf = AudioBuffer.new (2, 2048)
 // -- do someting with `buf`
 static int audio_new (lua_State* L) {
     auto** buf = (Buffer**) lua_newuserdata (L, sizeof (Buffer**));
@@ -340,13 +340,13 @@ LUAMOD_API int luaopen_kv_AudioBuffer64 (lua_State* L) {
     }
 
     if (luaL_newmetatable (L, LKV_MT_AUDIO_BUFFER_TYPE)) {
-        lua_pushcfunction (L, audio_new);   /* push audio_new function */
-        lua_setfield (L, -2, "__call");     /* mt.__call = audio_new */
         lua_pop (L, 1);
     }
 
     lua_newtable (L);
     luaL_setmetatable (L, LKV_MT_AUDIO_BUFFER_TYPE);
+    lua_pushcfunction (L, audio_new);
+    lua_setfield (L, -2, "new");
     return 1;
 }
 

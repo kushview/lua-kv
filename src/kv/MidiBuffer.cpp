@@ -246,11 +246,11 @@ static const luaL_Reg buffer_methods[] = {
     /// Insert some bytes into the buffer.
     // The kv.ByteArray passed in should contain a complete MIDI message
     // of any type.
-    // @function MidiBuffer:insertbytes
+    // @function MidiBuffer:addbytes
     // @tparam kv.ByteArray bytes The bytes to add
     // @int size Max number of bytes to add
     // @int frame Sample index to insert at
-    { "insertbytes",        midibuffer_insertbytes },
+    { "addbytes",        midibuffer_insertbytes },
 
     /// Iterate over MIDI data.
     // Iterate over midi data in this buffer
@@ -265,7 +265,7 @@ static const luaL_Reg buffer_methods[] = {
     // end
     { "events",             midibuffer_events },
 
-    /// Add a raw MIDI Event
+    /// Add a raw MIDI Event.
     // @function MidiBuffer:addevent
     // @param data Raw event data to add
     // @int size Size of data in bytes
@@ -309,8 +309,6 @@ int luaopen_kv_MidiBuffer (lua_State* L) {
     }
 
     if (luaL_newmetatable (L, LKV_MT_MIDI_BUFFER_TYPE)) {
-        lua_pushcfunction (L, midibuffer_new);   /* push audio_new function */
-        lua_setfield (L, -2, "__call");     /* mt.__call = audio_new */
         lua_pop (L, 1);
     }
 

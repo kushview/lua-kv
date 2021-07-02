@@ -1,5 +1,5 @@
 /// A rectangle.
-// The value type for this is a 32bit float
+// The value type for this is a 32 bit float.
 // @classmod kv.Rectangle
 // @pragma nostrip
 

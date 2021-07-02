@@ -2,22 +2,19 @@
 -- @classmod kv.AudioBuffer
 -- @pragma nostrip
 
-return setmetatable ({
-    --- Create a 32bit buffer
-    -- @function AudioBuffer.Float
-    -- @param ... Params sent to ctor
-    -- @return kv.AudioBuffer
-    -- @within Constructors
-    Float  = require ('kv.AudioBuffer32'),
+AudioBuffer32 = require ('kv.AudioBuffer32')
+AudioBuffer64 = require ('kv.AudioBuffer64')
 
-    --- Create a 64bit buffer
-    -- @function AudioBuffer.Double
-    -- @param ... Params sent to ctor
-    -- @return kv.AudioBuffer
-    -- @within Constructors
-    Double = require ('kv.AudioBuffer64')
-} , {
-    __call = function (T, ...)
-        return T.Float (...)
-    end
-})
+local M = {}
+
+function M.new32 (...)
+    return AudioBuffer32.new (...)
+end
+
+function M.new64 (...)
+    return AudioBuffer64.new (...)
+end
+
+M.new = M.new32
+
+return M
