@@ -17,20 +17,10 @@ PERFORMANCE OF THIS SOFTWARE.
 #ifndef LKV_H
 #define LKV_H
 
+
+
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#ifdef __cplusplus
- #define LKV_EXTERN extern "C"
-#else
- #define LKV_EXTERN
-#endif
-
-#ifdef _WIN32
- #define LKV_EXPORT LKV_EXTERN __declspec(dllexport)
-#else
- #define LKV_EXPORT LKV_EXTERN __attribute__((visibility("default")))
 #endif
 
 #include <stdbool.h>
@@ -41,6 +31,23 @@ extern "C" {
 #if (LUA_VERSION_NUM < 503)
  #pragma error "Lua KV requires Lua v5.3.5 or higher"
  #pragma GCC error "Lua KV requires Lua v5.3.5 or higher"
+#endif
+
+#ifdef LKV_MODULE
+  #ifdef __cplusplus
+    #define LKV_EXTERN extern "C"
+  #else
+    #define LKV_EXTERN
+  #endif
+
+  #ifdef _WIN32
+    #define LKV_EXPORT LKV_EXTERN __declspec(dllexport)
+  #else
+    #define LKV_EXPORT LKV_EXTERN __attribute__((visibility("default")))
+  #endif
+#else
+  #define LKV_EXTERN
+  #define LKV_EXPORT LUAMOD_API
 #endif
 
 #ifndef LKV_FORCE_FLOAT32

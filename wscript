@@ -29,7 +29,8 @@ def configure (conf):
         conf.env.append_unique ('CXXFLAGS', ['-Os'])
         conf.env.append_unique ('CFLAGS', ['-Os'])
     conf.env.append_unique ('CXXFLAGS', ['-std=c++17'])
-
+    conf.env.append_unique ('CPPFLAGS', ['-DLKV_MODULE'])
+    
     if 'darwin' in sys.platform:
         osARCHS = os.getenv ('ARCHS', '')
         if isinstance(osARCHS, str) and len(osARCHS) > 0:
