@@ -201,7 +201,7 @@ void kv_vector_metatable (lua_State* L) {
     }
 }
 
-LUAMOD_API 
+LKV_EXPORT 
 int luaopen_kv_vector (lua_State* L) {
     kv_vector_metatable (L);
     luaL_newlib (L, vector_f);

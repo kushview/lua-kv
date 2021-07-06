@@ -3,20 +3,21 @@ local round             = require ('kv.round')
 
 TestAudioBuffer = {
     testNew = function()
-        local buf = AudioBuffer.Float (2, 128)
+        local buf = AudioBuffer.new32 (2, 128)
+        print(tostring(buf))
         luaunit.assertNotEquals (buf, nil)
         luaunit.assertEquals (type (buf), 'userdata')
-        luaunit.assertTrue (buf:channels() == 2)
-        luaunit.assertTrue (buf:length() == 128)
+        luaunit.assertEquals (buf:channels(), 2)
+        luaunit.assertEquals (buf:length(), 128)
         luaunit.assertFalse (buf:cleared())
-        luaunit.assertTrue (buf:is_float())
-        luaunit.assertFalse (buf:is_double())
+        luaunit.assertTrue (buf:isfloat())
+        luaunit.assertFalse (buf:isdouble())
     end,
 
     testGetSet = function()
         local nchans = 1
         local nframes = 4096
-        local buf = AudioBuffer (nchans, nframes)
+        local buf = AudioBuffer.new (nchans, nframes)
         luaunit.assertEquals (0.0, buf:get ())
         luaunit.assertEquals (0.0, buf:get (1))
         
@@ -30,7 +31,7 @@ TestAudioBuffer = {
     end,
 
     testCleared = function()
-        local buf = AudioBuffer (2, 128)
+        local buf = AudioBuffer.new (2, 128)
         buf:set (1, 1, 0.0)
         luaunit.assertFalse (buf:cleared())
         buf:clear()

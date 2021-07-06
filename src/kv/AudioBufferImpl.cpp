@@ -298,9 +298,9 @@ static int audio_new (lua_State* L) {
     auto** buf = (Buffer**) lua_newuserdata (L, sizeof (Buffer**));
     
     int nchans = 0, nframes = 0;
-    if (lua_gettop(L) >= 3 && lua_isinteger (L, 2) && lua_isinteger (L, 3)) {
-        nchans  = (int) juce::jmax (lua_Integer(), lua_tointeger (L, 2));
-        nframes = (int) juce::jmax (lua_Integer(), lua_tointeger (L, 3));
+    if (lua_gettop(L) >= 2 && lua_isinteger (L, 1) && lua_isinteger (L, 2)) {
+        nchans  = (int) juce::jmax (lua_Integer(), lua_tointeger (L, 1));
+        nframes = (int) juce::jmax (lua_Integer(), lua_tointeger (L, 2));
     }
 
     *buf = new Buffer (nchans, nframes);
@@ -328,9 +328,11 @@ static const luaL_Reg buffer_methods[] = {
 
 //==============================================================================
 #if LKV_AUDIO_BUFFER_32
-LUAMOD_API int luaopen_kv_AudioBuffer32 (lua_State* L) {
+LKV_EXPORT 
+int luaopen_kv_AudioBuffer32 (lua_State* L) {
 #else
-LUAMOD_API int luaopen_kv_AudioBuffer64 (lua_State* L) {
+LKV_EXPORT 
+int luaopen_kv_AudioBuffer64 (lua_State* L) {
 #endif
     if (luaL_newmetatable (L, LKV_MT_AUDIO_BUFFER_IMPL)) {
         lua_pushvalue (L, -1);               /* duplicate the metatable */

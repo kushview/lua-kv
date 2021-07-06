@@ -16,8 +16,8 @@ struct MidiBufferImpl final {
     int                         msgref      { LUA_REFNIL };
 
     MidiBufferImpl (lua_State* L) {
-        message = (MidiMessage**) lua_newuserdata (L, sizeof (MidiMessage**));
-        *message = new MidiMessage();
+        message = (juce::MidiMessage**) lua_newuserdata (L, sizeof (juce::MidiMessage**));
+        *message = new juce::MidiMessage();
         luaL_setmetatable (L, LKV_MT_MIDI_MESSAGE);
         msgref = luaL_ref (L, LUA_REGISTRYINDEX);
     }
@@ -39,7 +39,7 @@ struct MidiBufferImpl final {
     void reset_iter()
     {
         iter = buffer.begin();
-        **message = MidiMessage();
+        **message = juce::MidiMessage();
     }
 };
 

@@ -3,8 +3,8 @@ title       = 'Lua KV'
 description = 'KV Lua Modules and Classes'
 file = {
     'src/kv',
-    'kv/lua/rectangle.hpp',
-    'kv/lua/widget.hpp',
+    'include/kv/lua/rectangle.hpp',
+    'include/kv/lua/widget.hpp',
     exclude = {
         'src/lua-kv.h',
         'src/kv/vector.c',

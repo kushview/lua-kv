@@ -11,9 +11,9 @@ namespace lua {
 
 template<typename WidgetType>
 static void widget_setbounds (WidgetType& self, const sol::object& obj) {
-    if (obj.is<Rectangle<int>>())
+    if (obj.is<juce::Rectangle<int>>())
     {
-        self.setBounds (obj.as<Rectangle<int>>());
+        self.setBounds (obj.as<juce::Rectangle<int>>());
     }
     else if (obj.is<sol::table>())
     {
@@ -141,10 +141,10 @@ new_widgettype (lua_State* L, const char* name, Args&& ...args) {
             /// Repaint a section.
             // @function Widget:repaint
             // @tparam kv.Bounds b Area to repaint
-            [](Widget& self, const Rectangle<int>& r) { 
+            [](Widget& self, const juce::Rectangle<int>& r) { 
                 self.repaint (r); 
             },
-            [](Widget& self, const Rectangle<double>& r) { 
+            [](Widget& self, const juce::Rectangle<double>& r) { 
                 self.repaint (r.toNearestInt());
             },
 

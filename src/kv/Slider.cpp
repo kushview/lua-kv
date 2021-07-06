@@ -70,8 +70,9 @@ private:
 
 }}
 
-LUAMOD_API
+LKV_EXPORT
 int luaopen_kv_Slider (lua_State* L) {
+    using namespace juce;
     using kv::lua::Slider;
 
     auto T = kv::lua::new_widgettype<Slider> (L, LKV_TYPE_NAME_SLIDER,

@@ -10,7 +10,7 @@
 
 using namespace juce;
 
-LUAMOD_API
+LKV_EXPORT
 int luaopen_kv_Bounds (lua_State* L) {
     using B = Rectangle<int>;
     

@@ -79,7 +79,7 @@ static const luaL_Reg round_f[] = {
     { NULL, NULL }
 };
 
-LUAMOD_API
+LKV_EXPORT
 int luaopen_kv_round (lua_State* L) {
     luaL_newlib (L, round_f);
     return 1;

@@ -174,7 +174,7 @@ static const luaL_Reg bytes_m[] = {
     { NULL, NULL }
 };
 
-LUAMOD_API
+LKV_EXPORT
 int luaopen_kv_bytes (lua_State* L) {
     if (luaL_newmetatable (L, LKV_MT_BYTE_ARRAY)) {
         lua_pushvalue (L, -1);               /* duplicate the metatable */

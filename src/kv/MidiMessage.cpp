@@ -548,7 +548,7 @@ static const luaL_Reg midimessage_methods[] = {
     { nullptr, nullptr }
 };
 
-LUAMOD_API
+LKV_EXPORT
 int luaopen_kv_MidiMessage (lua_State* L) {
     if (luaL_newmetatable (L, LKV_MT_MIDI_MESSAGE)) {
         lua_pushvalue (L, -1);               /* duplicate the metatable */

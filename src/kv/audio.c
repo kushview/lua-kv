@@ -14,6 +14,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 */
 
+#include "lua-kv.h"
 #include <lauxlib.h>
 #include <math.h>
 
@@ -46,7 +47,7 @@ static luaL_Reg audio_f[] = {
     { NULL, NULL }
 };
 
-LUAMOD_API
+LKV_EXPORT
 int luaopen_kv_audio (lua_State* L) {
     luaL_newlib (L, audio_f);
     return 1;

@@ -10,7 +10,7 @@
 
 using namespace juce;
 
-LUAMOD_API
+LKV_EXPORT
 int luaopen_kv_Desktop (lua_State* L)
 {
     sol::state_view lua (L);

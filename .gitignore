@@ -4,3 +4,6 @@
 /build/
 /.vscode/
 src/kv/WidgetOld.lua
+
+jucer/lua-kv/Builds/
+.DS_Store

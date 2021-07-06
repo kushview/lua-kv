@@ -9,7 +9,7 @@
 
 using namespace juce;
 
-LUAMOD_API
+LKV_EXPORT
 int luaopen_kv_Rectangle (lua_State* L) {
     using R = Rectangle<float>;
 

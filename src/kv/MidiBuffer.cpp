@@ -299,7 +299,7 @@ static const luaL_Reg buffer_methods[] = {
 };
 
 //==============================================================================
-LUAMOD_API
+LKV_EXPORT
 int luaopen_kv_MidiBuffer (lua_State* L) {
     if (luaL_newmetatable (L, LKV_MT_MIDI_BUFFER)) {
         lua_pushvalue (L, -1);               /* duplicate the metatable */

@@ -91,7 +91,7 @@ private:
 
 }}
 
-LUAMOD_API
+LKV_EXPORT
 int luaopen_kv_DocumentWindow (lua_State* L) {
     using kv::lua::DocumentWindow;
 

@@ -4,7 +4,7 @@ package.path  = "src/?.lua;test/?.lua;"..package.path
 luaunit = require ('luaunit')
 
 local tests = {
-    'test_byte',
+    'test_bytes',
     'test_midi',
     'test_object',
     'TestAudioBuffer',

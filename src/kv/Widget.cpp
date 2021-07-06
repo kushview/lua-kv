@@ -98,7 +98,7 @@ private:
 
 }}
 
-LUAMOD_API
+LKV_EXPORT
 int luaopen_kv_Widget (lua_State* L) {
     using kv::lua::Widget;
 

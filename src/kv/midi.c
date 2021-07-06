@@ -108,7 +108,7 @@ static const luaL_Reg midi_f[] = {
     { NULL, NULL }
 };
 
-LUAMOD_API
+LKV_EXPORT
 int luaopen_kv_midi (lua_State* L) {
     luaL_newlib (L, midi_f);
     return 1;
