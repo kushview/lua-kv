@@ -41,6 +41,15 @@ def configure (conf):
     conf.check_cfg (package='lua', msg='Checking for lua header',  uselib_store='LUA',    args=['--cflags'], mandatory=True)
     conf.check_cfg (package='lua', msg='Checking for lua library', uselib_store='LUALIB', args=['--libs'],   mandatory=True)
 
+    if 'linux' in sys.platform:
+        conf.check_cfg (package='freetype2', args='--cflags --libs', mandatory=True)
+        conf.check_cfg (package='x11', args='--cflags --libs', mandatory=True)
+        conf.check_cfg (package='xext', args='--cflags --libs', mandatory=True)
+        conf.check_cfg (package='xrandr', args='--cflags --libs', mandatory=True)
+        conf.check_cfg (package='xcomposite', args='--cflags --libs', mandatory=True)
+        conf.check_cfg (package='xinerama', args='--cflags --libs', mandatory=True)
+        conf.check_cfg (package='xcursor', args='--cflags --libs', mandatory=True)
+
     jucepath = conf.options.juce
     if len(jucepath) <= 0:
         jucepath = os.path.join (os.path.expanduser("~"), 'SDKs/JUCE')
@@ -72,8 +81,10 @@ def setup_module (mod):
         mod.env.append_unique ('CXXFLAGS',  [ '-fvisibility=hidden', '-fPIC'])
     elif sys.platform == 'windows':
         pass
-
-    if 'darwin' in sys.platform:
+    
+    if 'linux' in sys.platform:
+        mod.use += [ 'FREETYPE2', 'X11', 'XEXT', 'XRANDR', 'XCOMPOSITE', 'XINERAMA', 'XCURSOR' ]
+    elif 'darwin' in sys.platform:
         mod.mac_bundle = True
         mod.env.FRAMEWORK_ACCELERATE     = 'Accelerate'
         mod.env.FRAMEWORK_AUDIO_TOOLBOX  = 'AudioToolbox'
